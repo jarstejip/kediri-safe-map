@@ -392,16 +392,17 @@ svg {
   font-size: 17px;
   font-weight: 800;
   color: #15803d;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
 .brand-titles .sub-title {
   display: block;
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 800;
   color: #0284c7;
-  letter-spacing: 0.5px;
-  margin-top: 1px;
+  letter-spacing: 0.6px;
+  margin-top: 2px;
+  line-height: 1.2;
 }
 
 .navbar-center {
@@ -1272,8 +1273,11 @@ svg {
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 12px;
-  font-weight: 800;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+.verified-dot svg {
+  stroke: #ffffff;
 }
 
 .user-display-name {
@@ -1353,6 +1357,7 @@ svg {
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  gap: 12px;
 }
 
 .menu-item-card:hover {
@@ -1361,13 +1366,13 @@ svg {
 }
 
 .menu-icon-round {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 14px;
+  margin-right: 0;
   flex-shrink: 0;
 }
 
@@ -1376,6 +1381,7 @@ svg {
 
 .menu-text-wrap {
   flex: 1;
+  min-width: 0;
 }
 
 .menu-head {
@@ -1385,15 +1391,22 @@ svg {
 }
 
 .menu-desc {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
-  margin-top: 1px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .menu-chevron {
-  color: #9ca3af;
-  font-size: 16px;
-  font-weight: 700;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
 }
 
 .red-text {
@@ -4275,24 +4288,29 @@ svg {
   .brand-titles {
     display: flex !important;
     flex-direction: column !important;
+    justify-content: center !important;
     min-width: 0 !important;
+    gap: 2px !important;
   }
   
   .brand-titles .main-title {
     font-size: 14.5px !important;
     font-weight: 800 !important;
     color: #0f172a !important;
-    line-height: 1.15 !important;
+    line-height: 1.2 !important;
     white-space: nowrap !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   
   .brand-titles .sub-title {
     font-size: 8px !important;
     font-weight: 700 !important;
     color: #0284c7 !important;
-    letter-spacing: 0.4px !important;
-    line-height: 1.1 !important;
-    margin-top: 1px !important;
+    letter-spacing: 0.5px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   
   .navbar-center {
@@ -4820,31 +4838,167 @@ svg {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     height: 100% !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(148, 163, 184, 0.3) transparent !important;
+  }
+
+  #tab-view-profile::-webkit-scrollbar {
+    width: 4px !important;
+  }
+
+  #tab-view-profile::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3) !important;
+    border-radius: 9999px !important;
   }
   
   .profile-web-wrapper {
-    padding: 14px 12px 24px 12px !important;
+    padding: 14px 14px 84px 14px !important;
     box-sizing: border-box !important;
     max-width: 100% !important;
+    width: 100% !important;
   }
   
   .profile-web-grid {
     display: flex !important;
     flex-direction: column !important;
-    gap: 14px !important;
+    gap: 12px !important;
     width: 100% !important;
   }
   
   .profile-id-card {
-    padding: 20px 16px !important;
-    border-radius: 18px !important;
+    padding: 22px 16px 18px 16px !important;
+    border-radius: 20px !important;
     width: 100% !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  .stats-row-box {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    width: 100% !important;
+    background: #f8fafc !important;
+    border-radius: 14px !important;
+    padding: 12px 6px !important;
+    border: 1px solid #e2e8f0 !important;
+    margin-top: 14px !important;
     box-sizing: border-box !important;
   }
 
+  .stat-col {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 0 2px !important;
+    position: relative !important;
+    border: none !important;
+  }
+
+  .stat-col:not(:last-child)::after {
+    content: '' !important;
+    position: absolute !important;
+    right: 0 !important;
+    top: 15% !important;
+    height: 70% !important;
+    width: 1px !important;
+    background: #e2e8f0 !important;
+  }
+
+  .stat-val {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    line-height: 1.1 !important;
+  }
+
+  .stat-name {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    margin-top: 4px !important;
+    line-height: 1.2 !important;
+    white-space: normal !important;
+    text-align: center !important;
+  }
+
+  .menu-items-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 9px !important;
+    width: 100% !important;
+  }
+
   .menu-item-card {
+    display: flex !important;
+    align-items: center !important;
     padding: 12px 14px !important;
-    border-radius: 14px !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    gap: 12px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  .menu-item-card:active {
+    background: #f8fafc !important;
+    transform: scale(0.99) !important;
+  }
+
+  .menu-icon-round {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 12px !important;
+    margin-right: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .menu-text-wrap {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    padding-right: 4px !important;
+  }
+
+  .menu-head {
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    line-height: 1.25 !important;
+  }
+
+  .menu-desc {
+    font-size: 11.5px !important;
+    color: #64748b !important;
+    margin-top: 2px !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .menu-chevron {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #94a3b8 !important;
+    flex-shrink: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .logout-item {
+    border-color: #fee2e2 !important;
+    background: #fffafa !important;
+    margin-top: 4px !important;
+  }
+
+  .logout-item:active {
+    background: #fee2e2 !important;
   }
 
   /* 9. Modals on Mobile */
