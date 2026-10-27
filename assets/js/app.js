@@ -1645,25 +1645,30 @@ function renderDrawerFacilityCards() {
   // Tampilkan 8 fasilitas darurat terdekat dari posisi pengguna saat ini
   const topNearby = kediriFacilities.slice(0, 8);
 
-  container.innerHTML = topNearby.map(item => `
-    <div class="facility-web-card" onclick="focusFacilityOnMap(${item.id})" title="Klik untuk melihat di peta">
-      <div class="card-top-header">
-        <span class="badge-cat-cyan">${item.category}</span>
+  container.innerHTML = topNearby.map(item => {
+    const isRs = item.type === 'rs';
+    const isApotek = item.type === 'apotek';
+    const isShelter = item.type === 'shelter';
+    const catClass = isRs ? 'cat-rs' : (isApotek ? 'cat-apotek' : (isShelter ? 'cat-shelter' : 'cat-keamanan'));
+
+    return `
+      <div class="facility-web-card" onclick="focusFacilityOnMap(${item.id})" title="Klik untuk melihat di peta">
+        <span class="badge-cat-cyan ${catClass}">${item.category}</span>
+        <h3 class="facility-heading" title="${item.name}">${item.name}</h3>
+        <p class="facility-distance">📍 ${item.distance || 'Menghitung...'}</p>
+        <div class="card-bottom-actions">
+          <span class="facility-open-tag">● ${item.status}</span>
+          <button type="button" class="btn-card-start-nav" onclick="event.stopPropagation(); startNavigationToFacility(${item.id})" title="Mulai Navigasi">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>Rute</span>
+          </button>
+        </div>
       </div>
-      <h3 class="facility-heading">${item.name}</h3>
-      <p class="facility-distance">📍 ${item.distance || 'Menghitung...'}</p>
-      <div class="card-bottom-actions">
-        <span class="facility-open-tag">● ${item.status}</span>
-        <button type="button" class="btn-card-start-nav" onclick="event.stopPropagation(); startNavigationToFacility(${item.id})" title="Mulai Navigasi">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          <span>Mulai</span>
-        </button>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
-// Buka / Tutup Drawer Fasilitas (Mobile Friendly)
+// Buka / Tutup Drawer Fasilitas di Mobile & Desktop
 function toggleDrawerCollapse() {
   const drawer = document.getElementById('main-facilities-drawer');
   if (!drawer) return;
@@ -1699,7 +1704,7 @@ async function fetchUserVillageName(lat, lng) {
       const locText = village ? `${village}, Kec. ${town}` : `Kecamatan ${town}`;
       const subTitle = document.getElementById('drawer-sub-title') || document.querySelector('.drawer-sub');
       if (subTitle) {
-        subTitle.textContent = `📍 Lokasi: ${locText} • Diurutkan dari terdekat`;
+        subTitle.textContent = `📍 Area: ${locText} • Diurutkan dari terdekat`;
       }
       const drawerTitle = document.getElementById('drawer-main-title') || document.querySelector('.drawer-title');
       if (drawerTitle) {

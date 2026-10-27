@@ -742,36 +742,6 @@ svg {
   margin-left: 8px;
 }
 
-.drawer-drag-pill {
-  width: 36px;
-  height: 4px;
-  background: #cbd5e1;
-  border-radius: 4px;
-  margin: 0 auto 8px auto;
-  cursor: pointer;
-}
-.drawer-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.drawer-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 1px solid var(--border-light, #e2e8f0);
-  background: #f8fafc;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.drawer-toggle-btn:hover {
-  background: #e2e8f0;
-  color: #0f172a;
-}
 .drawer-link-btn {
   font-size: 12px;
   font-weight: 700;
@@ -1534,254 +1504,7 @@ svg {
   }
 }
 
-@media (max-width: 768px) {
-  /* Navbar */
-  .app-navbar {
-    height: 50px;
-    padding: 0 12px;
-  }
-  .navbar-center, .user-name-label, .btn-logout-head {
-    display: none;
-  }
-  .brand-logo-crest {
-    font-size: 13px;
-  }
-
-  /* Bottom navigation bar */
-  .mobile-bottom-tabs {
-    display: flex;
-    height: 56px;
-    background: #ffffff;
-    border-top: 1px solid #e2e8f0;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-    z-index: 1000;
-  }
-
-  /* Top Toolbar: Search + Horizontal Filter Chips */
-  .map-query-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    top: 8px;
-    left: 10px;
-    right: 10px;
-    max-width: none;
-    gap: 6px;
-    z-index: 500;
-  }
-  .search-input-pill {
-    width: 100%;
-    height: 38px;
-    border-radius: 20px;
-    padding: 0 12px;
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e2e8f0;
-  }
-  .search-input-pill input {
-    font-size: 12.5px;
-  }
-  .chips-filter-row {
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .chips-filter-row::-webkit-scrollbar {
-    display: none;
-  }
-  .filter-pill {
-    padding: 5px 12px;
-    font-size: 11px;
-    font-weight: 600;
-    border-radius: 20px;
-    white-space: nowrap;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  }
-
-  /* GPS Pill floating cleanly under toolbar */
-  .map-gps-live-pill {
-    top: 94px;
-    left: 10px;
-    font-size: 10px;
-    padding: 4px 10px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e2e8f0;
-    z-index: 450;
-  }
-
-  /* Floating Action Buttons: positioned cleanly above drawer on the right */
-  .map-floating-actions {
-    top: auto;
-    bottom: 165px;
-    right: 12px;
-    z-index: 500;
-    gap: 8px;
-  }
-  .map-action-btn {
-    width: 38px;
-    height: 38px;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
-  }
-  .map-action-btn svg {
-    width: 18px;
-    height: 18px;
-  }
-  .zoom-pill-box {
-    display: none !important; /* Native pinch to zoom on mobile */
-  }
-
-  /* Bottom Facility Drawer: Sleek Bottom Sheet */
-  .facilities-drawer {
-    left: 8px;
-    right: 8px;
-    bottom: 8px;
-    padding: 6px 10px 10px 10px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
-    border: 1px solid rgba(226, 232, 240, 0.9);
-    z-index: 500;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .facilities-drawer.minimized {
-    transform: translateY(calc(100% - 44px));
-  }
-  .facilities-drawer.minimized .cards-grid-row {
-    display: none;
-  }
-
-  .drawer-drag-pill {
-    width: 36px;
-    height: 4px;
-    background: #cbd5e1;
-    border-radius: 4px;
-    margin: 0 auto 6px auto;
-  }
-  .drawer-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
-    padding: 0 2px;
-  }
-  .drawer-title-group {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    max-width: 68%;
-    overflow: hidden;
-  }
-  .drawer-title {
-    font-size: 12.5px;
-    font-weight: 800;
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .drawer-sub {
-    font-size: 10px;
-    color: #64748b;
-    margin-left: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .drawer-header-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .drawer-link-btn {
-    font-size: 11px;
-    padding: 4px 8px;
-    background: #e0f2fe;
-    color: #0369a1;
-    border-radius: 8px;
-    white-space: nowrap;
-    font-weight: 700;
-  }
-  .drawer-toggle-btn {
-    width: 26px;
-    height: 26px;
-  }
-
-  /* Cards Grid: Smooth Horizontal Snap Carousel */
-  .cards-grid-row {
-    display: flex;
-    overflow-x: auto;
-    gap: 8px;
-    padding: 2px 0 4px 0;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .cards-grid-row::-webkit-scrollbar {
-    display: none;
-  }
-
-  .facility-web-card {
-    flex: 0 0 175px;
-    width: 175px;
-    scroll-snap-align: start;
-    padding: 8px 10px;
-    border-radius: 12px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  .badge-cat-cyan {
-    font-size: 8px;
-    margin-bottom: 2px;
-  }
-  .facility-heading {
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.25;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 2px;
-  }
-  .facility-distance {
-    font-size: 10.5px;
-    font-weight: 600;
-    color: #2563eb;
-    margin-bottom: 4px;
-  }
-  .card-bottom-actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 4px;
-  }
-  .facility-open-tag {
-    font-size: 9.5px;
-    font-weight: 700;
-    color: #16a34a;
-  }
-  .btn-card-start-nav {
-    padding: 3px 8px;
-    font-size: 10px;
-    border-radius: 12px;
-    background: #16a34a;
-    color: white;
-    border: none;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-  }
-}
+/* Tablet / Mobile breakpoint rules are consolidated in the comprehensive section at the bottom of stylesheet */
 
 /* ========================================================
    OAUTH LOGIN & TOAST OVERLAYS
@@ -4458,6 +4181,574 @@ svg {
 .btn-face-retake:hover {
   background: #f1f5f9;
   color: #0f172a;
+}
+
+/* ========================================================
+   COMPREHENSIVE MOBILE-FRIENDLY RESPONSIVE DESIGN SYSTEM
+   ======================================================== */
+
+.drawer-drag-pill {
+  display: none;
+}
+
+.drawer-toggle-btn {
+  display: none;
+}
+
+.mobile-bottom-tabs {
+  display: none;
+}
+
+/* Category Badge Colors on Facility Cards */
+.badge-cat-cyan.cat-rs { color: #dc2626 !important; }
+.badge-cat-cyan.cat-apotek { color: #15803d !important; }
+.badge-cat-cyan.cat-shelter { color: #c2410c !important; }
+.badge-cat-cyan.cat-keamanan { color: #2563eb !important; }
+
+/* Minimized Drawer State */
+.facilities-drawer.minimized {
+  padding-bottom: 8px !important;
+}
+
+.facilities-drawer.minimized .cards-grid-row {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  /* 1. App Top Navbar (Compact 52px) */
+  .app-navbar {
+    height: 52px !important;
+    padding: 0 12px !important;
+  }
+  
+  .navbar-left {
+    gap: 8px !important;
+  }
+  
+  .brand-crest-col {
+    display: none !important;
+  }
+  
+  .brand-crest-img {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  .brand-titles .main-title {
+    font-size: 14px !important;
+    font-weight: 800 !important;
+  }
+  
+  .brand-titles .sub-title {
+    font-size: 8px !important;
+    letter-spacing: 0.3px !important;
+  }
+  
+  .navbar-center {
+    display: none !important;
+  }
+  
+  .navbar-right {
+    gap: 6px !important;
+  }
+  
+  .user-name-label {
+    display: none !important;
+  }
+  
+  .user-badge-role {
+    display: none !important;
+  }
+  
+  .user-chip {
+    padding: 2px !important;
+    background: transparent !important;
+    border: none !important;
+  }
+  
+  .user-avatar-sm {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 11px !important;
+  }
+  
+  .btn-notif-bell,
+  .icon-circle-btn {
+    width: 34px !important;
+    height: 34px !important;
+  }
+  
+  .btn-logout-head {
+    display: none !important;
+  }
+
+  /* 2. Mobile Fixed Bottom Navigation Bar */
+  .mobile-bottom-tabs {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 58px !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.9) !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08) !important;
+    z-index: 1000 !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    padding: 0 4px !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+  
+  .mobile-tab {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 6px 0 !important;
+    color: #64748b !important;
+    font-size: 10.5px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    gap: 2px !important;
+  }
+  
+  .mobile-tab.active {
+    color: #15803d !important;
+    font-weight: 700 !important;
+  }
+  
+  .mobile-tab.active svg {
+    stroke: #15803d !important;
+    transform: scale(1.08) !important;
+  }
+  
+  .mobile-tab.sos-color.active {
+    color: #dc2626 !important;
+  }
+  
+  .mobile-tab.sos-color.active svg {
+    stroke: #dc2626 !important;
+  }
+  
+  .mobile-tab .rel-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .mobile-tab .badge-red-dot {
+    position: absolute;
+    top: -2px;
+    right: -3px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ef4444;
+    border: 1px solid #ffffff;
+  }
+
+  /* 3. Main Body & Viewport for Mobile */
+  .web-content-body {
+    height: calc(100vh - 52px - 58px) !important;
+    overflow: hidden !important;
+    position: relative !important;
+  }
+
+  /* 4. Map Tab View */
+  #tab-view-map {
+    height: 100% !important;
+    width: 100% !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  
+  #web-leaflet-map {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  .map-query-toolbar {
+    position: absolute !important;
+    top: 10px !important;
+    left: 10px !important;
+    right: 10px !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    z-index: 450 !important;
+  }
+  
+  .search-input-pill {
+    width: 100% !important;
+    height: 42px !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+    border-radius: 9999px !important;
+    padding: 0 14px !important;
+  }
+  
+  .search-input-pill input {
+    font-size: 12.5px !important;
+  }
+  
+  .chips-filter-row {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    gap: 6px !important;
+    padding: 2px 0 !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .chips-filter-row::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  .filter-pill {
+    padding: 5px 12px !important;
+    font-size: 11px !important;
+    border-radius: 9999px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .map-gps-live-pill {
+    position: absolute !important;
+    top: 96px !important;
+    left: 10px !important;
+    z-index: 450 !important;
+    max-width: 195px !important;
+    font-size: 10.5px !important;
+    padding: 5px 11px !important;
+    border-radius: 9999px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(8px) !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12) !important;
+  }
+  
+  .map-floating-actions {
+    position: absolute !important;
+    top: 96px !important;
+    right: 10px !important;
+    z-index: 450 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  
+  .map-action-btn {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .zoom-pill-box {
+    border-radius: 19px !important;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .btn-zoom {
+    width: 38px !important;
+    height: 34px !important;
+    font-size: 18px !important;
+  }
+
+  /* 5. Modern Bottom Facilities Drawer (Native Mobile Carousel) */
+  .facilities-drawer {
+    position: absolute !important;
+    bottom: 8px !important;
+    left: 10px !important;
+    right: 10px !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 8px 12px 10px 12px !important;
+    border-radius: 18px !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16) !important;
+    z-index: 500 !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+  
+  .drawer-drag-pill {
+    display: block !important;
+    width: 36px !important;
+    height: 4px !important;
+    background: #cbd5e1 !important;
+    border-radius: 9999px !important;
+    margin: 0 auto 6px auto !important;
+    cursor: pointer !important;
+  }
+  
+  .drawer-header {
+    margin-bottom: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+  }
+  
+  .drawer-title-group {
+    flex: 1 !important;
+    min-width: 0 !important;
+    cursor: pointer !important;
+  }
+  
+  .drawer-title {
+    font-size: 13.5px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  
+  .drawer-sub {
+    font-size: 10px !important;
+    color: #64748b !important;
+    display: block !important;
+    margin-left: 0 !important;
+    margin-top: 1px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  
+  .drawer-header-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .drawer-link-btn {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding: 4px 10px !important;
+    background: #f0fdf4 !important;
+    color: #15803d !important;
+    border: 1px solid #bbf7d0 !important;
+    border-radius: 9999px !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+  }
+  
+  .drawer-toggle-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 50% !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+    cursor: pointer !important;
+  }
+
+  /* Smooth Horizontal Swipe Carousel */
+  .cards-grid-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 10px !important;
+    padding: 2px 2px 4px 2px !important;
+    scrollbar-width: none !important;
+  }
+  .cards-grid-row::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  .facility-web-card {
+    flex: 0 0 225px !important;
+    min-width: 225px !important;
+    max-width: 235px !important;
+    scroll-snap-align: start !important;
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    transition: transform 0.15s ease !important;
+  }
+  
+  .facility-web-card:active {
+    transform: scale(0.98) !important;
+  }
+  
+  .badge-cat-cyan {
+    font-size: 8.5px !important;
+    font-weight: 800 !important;
+    margin-bottom: 2px !important;
+    letter-spacing: 0.3px !important;
+    text-transform: uppercase !important;
+  }
+  
+  .facility-heading {
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    margin-bottom: 2px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.3 !important;
+  }
+  
+  .facility-distance {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #15803d !important;
+    margin-bottom: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+  }
+  
+  .card-bottom-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-top: 4px !important;
+    padding-top: 4px !important;
+    border-top: 1px dashed #f1f5f9 !important;
+  }
+  
+  .facility-open-tag {
+    font-size: 9.5px !important;
+    font-weight: 700 !important;
+    color: #16a34a !important;
+  }
+  
+  .btn-card-start-nav {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    background: #15803d !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 9999px !important;
+    cursor: pointer !important;
+  }
+
+  /* 6. Tab 2: SOS & Laporan on Mobile */
+  .page-max-container {
+    padding: 14px 12px 80px 12px !important;
+  }
+  
+  .sos-web-header {
+    margin-bottom: 16px !important;
+  }
+  
+  .sos-grid-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  
+  .sos-left-panel,
+  .sos-right-panel {
+    width: 100% !important;
+  }
+  
+  .sos-circle-container {
+    padding: 20px 0 !important;
+  }
+  
+  .sos-big-btn {
+    width: 140px !important;
+    height: 140px !important;
+    font-size: 20px !important;
+  }
+  
+  .emergency-hotline-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  
+  .hotline-card {
+    padding: 10px !important;
+  }
+
+  /* 7. Tab 3: Profil on Mobile */
+  .profile-web-wrapper {
+    padding: 16px 12px 80px 12px !important;
+  }
+  
+  .profile-web-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  
+  .profile-id-card {
+    padding: 20px 16px !important;
+  }
+
+  /* 8. Modals on Mobile */
+  .directory-modal-card,
+  .profile-modal-card,
+  .oauth-modal-card {
+    width: 95vw !important;
+    max-height: 88vh !important;
+    border-radius: 18px !important;
+  }
+  
+  .directory-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  
+  .directory-modal-header {
+    padding: 14px 16px !important;
+  }
+  
+  .directory-toolbar {
+    padding: 10px 16px !important;
+  }
+  
+  .directory-body-scroll {
+    padding: 14px 16px !important;
+  }
+
+  /* 9. Auth Screen Mobile */
+  .auth-card {
+    padding: 22px 16px !important;
+    border-radius: 20px !important;
+    width: 95% !important;
+    max-width: 380px !important;
+    margin: 12px auto !important;
+  }
+  
+  .face-scanner-viewport {
+    height: 200px !important;
+  }
 }
 
 
