@@ -1620,6 +1620,11 @@ function updateFacilitiesWithLiveLocation(lat, lng) {
   // 3. Render kartu fasilitas terdekat ke drawer bawah secara dinamis
   renderDrawerFacilityCards();
 
+  const subTitle = document.getElementById('drawer-sub-title') || document.querySelector('.drawer-sub');
+  if (subTitle && kediriFacilities.length > 0) {
+    subTitle.textContent = `📍 Terdekat: ${kediriFacilities[0].name} (${kediriFacilities[0].distance})`;
+  }
+
   // 4. Deteksi nama Desa / Kecamatan pengguna secara real-time
   fetchUserVillageName(lat, lng);
 
@@ -1634,26 +1639,45 @@ function updateFacilitiesWithLiveLocation(lat, lng) {
 
 // Render dinamis kartu fasilitas terdekat
 function renderDrawerFacilityCards() {
-  const container = document.querySelector('.cards-grid-row');
+  const container = document.getElementById('drawer-cards-grid-row') || document.querySelector('.cards-grid-row');
   if (!container) return;
 
-  // Tampilkan 6 fasilitas darurat terdekat dari posisi pengguna saat ini
-  const topNearby = kediriFacilities.slice(0, 6);
+  // Tampilkan 8 fasilitas darurat terdekat dari posisi pengguna saat ini
+  const topNearby = kediriFacilities.slice(0, 8);
 
   container.innerHTML = topNearby.map(item => `
     <div class="facility-web-card" onclick="focusFacilityOnMap(${item.id})" title="Klik untuk melihat di peta">
-      <span class="badge-cat-cyan">${item.category}</span>
+      <div class="card-top-header">
+        <span class="badge-cat-cyan">${item.category}</span>
+      </div>
       <h3 class="facility-heading">${item.name}</h3>
-      <p class="facility-distance">• ${item.distance || 'Menghitung jarak...'}</p>
+      <p class="facility-distance">📍 ${item.distance || 'Menghitung...'}</p>
       <div class="card-bottom-actions">
-        <span class="facility-open-tag">${item.status}</span>
+        <span class="facility-open-tag">● ${item.status}</span>
         <button type="button" class="btn-card-start-nav" onclick="event.stopPropagation(); startNavigationToFacility(${item.id})" title="Mulai Navigasi">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           <span>Mulai</span>
         </button>
       </div>
     </div>
   `).join('');
+}
+
+// Buka / Tutup Drawer Fasilitas (Mobile Friendly)
+function toggleDrawerCollapse() {
+  const drawer = document.getElementById('main-facilities-drawer');
+  if (!drawer) return;
+  drawer.classList.toggle('minimized');
+  const btn = document.getElementById('drawer-toggle-btn');
+  if (btn) {
+    if (drawer.classList.contains('minimized')) {
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
+      btn.title = "Buka panel fasilitas";
+    } else {
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+      btn.title = "Sembunyikan panel";
+    }
+  }
 }
 
 // Deteksi nama desa / kecamatan pengguna
@@ -1673,13 +1697,13 @@ async function fetchUserVillageName(lat, lng) {
       const town = addr.town || addr.city_district || addr.municipality || addr.county || 'Kediri';
       
       const locText = village ? `${village}, Kec. ${town}` : `Kecamatan ${town}`;
-      const subTitle = document.querySelector('.drawer-sub');
+      const subTitle = document.getElementById('drawer-sub-title') || document.querySelector('.drawer-sub');
       if (subTitle) {
-        subTitle.textContent = `📍 Lokasi Anda: ${locText} (Fasilitas diurutkan otomatis dari yang paling dekat)`;
+        subTitle.textContent = `📍 Lokasi: ${locText} • Diurutkan dari terdekat`;
       }
-      const drawerTitle = document.querySelector('.drawer-title');
+      const drawerTitle = document.getElementById('drawer-main-title') || document.querySelector('.drawer-title');
       if (drawerTitle) {
-        drawerTitle.textContent = `Fasilitas Terdekat di Sekitar Anda (${village || town})`;
+        drawerTitle.textContent = `Fasilitas Terdekat (${village || town})`;
       }
     }
   } catch (err) {}

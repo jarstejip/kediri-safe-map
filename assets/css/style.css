@@ -742,6 +742,36 @@ svg {
   margin-left: 8px;
 }
 
+.drawer-drag-pill {
+  width: 36px;
+  height: 4px;
+  background: #cbd5e1;
+  border-radius: 4px;
+  margin: 0 auto 8px auto;
+  cursor: pointer;
+}
+.drawer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.drawer-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border-light, #e2e8f0);
+  background: #f8fafc;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.drawer-toggle-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
 .drawer-link-btn {
   font-size: 12px;
   font-weight: 700;
@@ -1505,31 +1535,251 @@ svg {
 }
 
 @media (max-width: 768px) {
+  /* Navbar */
+  .app-navbar {
+    height: 50px;
+    padding: 0 12px;
+  }
   .navbar-center, .user-name-label, .btn-logout-head {
     display: none;
   }
+  .brand-logo-crest {
+    font-size: 13px;
+  }
+
+  /* Bottom navigation bar */
   .mobile-bottom-tabs {
     display: flex;
+    height: 56px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
   }
+
+  /* Top Toolbar: Search + Horizontal Filter Chips */
   .map-query-toolbar {
     flex-direction: column;
     align-items: stretch;
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    max-width: 100%;
+    top: 8px;
+    left: 10px;
+    right: 10px;
+    max-width: none;
+    gap: 6px;
+    z-index: 500;
   }
   .search-input-pill {
     width: 100%;
+    height: 38px;
+    border-radius: 20px;
+    padding: 0 12px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
   }
-  .facilities-drawer {
-    left: 12px;
+  .search-input-pill input {
+    font-size: 12.5px;
+  }
+  .chips-filter-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .chips-filter-row::-webkit-scrollbar {
+    display: none;
+  }
+  .filter-pill {
+    padding: 5px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 20px;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  /* GPS Pill floating cleanly under toolbar */
+  .map-gps-live-pill {
+    top: 94px;
+    left: 10px;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    z-index: 450;
+  }
+
+  /* Floating Action Buttons: positioned cleanly above drawer on the right */
+  .map-floating-actions {
+    top: auto;
+    bottom: 165px;
     right: 12px;
-    bottom: 74px;
-    padding: 12px 14px;
+    z-index: 500;
+    gap: 8px;
   }
+  .map-action-btn {
+    width: 38px;
+    height: 38px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  }
+  .map-action-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  .zoom-pill-box {
+    display: none !important; /* Native pinch to zoom on mobile */
+  }
+
+  /* Bottom Facility Drawer: Sleek Bottom Sheet */
+  .facilities-drawer {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    padding: 6px 10px 10px 10px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    z-index: 500;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .facilities-drawer.minimized {
+    transform: translateY(calc(100% - 44px));
+  }
+  .facilities-drawer.minimized .cards-grid-row {
+    display: none;
+  }
+
+  .drawer-drag-pill {
+    width: 36px;
+    height: 4px;
+    background: #cbd5e1;
+    border-radius: 4px;
+    margin: 0 auto 6px auto;
+  }
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    padding: 0 2px;
+  }
+  .drawer-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    max-width: 68%;
+    overflow: hidden;
+  }
+  .drawer-title {
+    font-size: 12.5px;
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .drawer-sub {
+    font-size: 10px;
+    color: #64748b;
+    margin-left: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .drawer-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .drawer-link-btn {
+    font-size: 11px;
+    padding: 4px 8px;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 8px;
+    white-space: nowrap;
+    font-weight: 700;
+  }
+  .drawer-toggle-btn {
+    width: 26px;
+    height: 26px;
+  }
+
+  /* Cards Grid: Smooth Horizontal Snap Carousel */
   .cards-grid-row {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 2px 0 4px 0;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .cards-grid-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .facility-web-card {
+    flex: 0 0 175px;
+    width: 175px;
+    scroll-snap-align: start;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .badge-cat-cyan {
+    font-size: 8px;
+    margin-bottom: 2px;
+  }
+  .facility-heading {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+  }
+  .facility-distance {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #2563eb;
+    margin-bottom: 4px;
+  }
+  .card-bottom-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+  .facility-open-tag {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #16a34a;
+  }
+  .btn-card-start-nav {
+    padding: 3px 8px;
+    font-size: 10px;
+    border-radius: 12px;
+    background: #16a34a;
+    color: white;
+    border: none;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 3px;
   }
 }
 
