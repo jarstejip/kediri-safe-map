@@ -1,0 +1,7 @@
+php-backend/
+database/
+*.sql
+*.bat
+.env
+.env.*
+README.md
