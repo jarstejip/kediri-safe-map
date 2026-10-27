@@ -267,6 +267,7 @@ function handleSignIn(e) {
     showToast('Silakan isi email dan kata sandi!');
     return;
   }
+  localStorage.setItem('kediri_safe_logged_in', 'true');
   showToast('Masuk berhasil! Selamat datang di Kediri Safe Map.');
   setTimeout(() => {
     enterAppDirectly();
@@ -645,10 +646,16 @@ function handleGoogleCredentialResponse(response) {
 
 // ---- Switch Screen: Auth vs Web App ----
 function enterAppDirectly() {
+  localStorage.setItem('kediri_safe_logged_in', 'true');
   webState.currentScreen = 'app';
   document.getElementById('auth-screen')?.classList.remove('active');
   document.getElementById('main-web-app')?.classList.add('active');
   switchWebTab('map');
+  setTimeout(() => {
+    if (webMap) {
+      webMap.invalidateSize();
+    }
+  }, 200);
 }
 
 // ========================================================
@@ -1217,6 +1224,7 @@ function closeLogoutModal() {
 
 function confirmLogout() {
   closeLogoutModal();
+  localStorage.removeItem('kediri_safe_logged_in');
   webState.currentScreen = 'auth';
   document.getElementById('main-web-app')?.classList.remove('active');
   document.getElementById('auth-screen')?.classList.add('active');
@@ -3320,6 +3328,16 @@ document.addEventListener('DOMContentLoaded', () => {
   syncGovernmentAlertsNow(false);
   // Auto-sync laporan warga dari database Laragon MySQL
   syncDatabaseReports();
+
+  // Wajib Daftar / Login dulu untuk membuka aplikasi
+  const isLoggedIn = localStorage.getItem('kediri_safe_logged_in') === 'true';
+  if (isLoggedIn) {
+    enterAppDirectly();
+  } else {
+    webState.currentScreen = 'auth';
+    document.getElementById('auth-screen')?.classList.add('active');
+    document.getElementById('main-web-app')?.classList.remove('active');
+  }
 });
 
 
