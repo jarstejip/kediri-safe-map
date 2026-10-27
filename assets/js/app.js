@@ -3329,6 +3329,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Auto-sync laporan warga dari database Laragon MySQL
   syncDatabaseReports();
 
+  // Hapus permanen link guest bypass jika masih ada di DOM atau cache
+  document.querySelectorAll('.guest-skip-box, .guest-link').forEach(el => el.remove());
+
   // Wajib Daftar / Login dulu untuk membuka aplikasi
   const isLoggedIn = localStorage.getItem('kediri_safe_logged_in') === 'true';
   if (isLoggedIn) {
