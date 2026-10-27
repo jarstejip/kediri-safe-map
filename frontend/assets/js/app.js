@@ -1261,31 +1261,39 @@ function switchWebTab(tabName) {
 // MAP CONFIGURATION & MAPBOX ENTERPRISE INTEGRATION
 // ========================================================
 const MAP_CONFIG = {
-  // Provider aktif: 'osm' | 'esri' | 'mapboxSatellite'
-  activeProvider: 'osm',
-  mapboxToken: localStorage.getItem('mapbox_token') || ''
+  // Provider aktif: 'googleRoadmap' | 'googleSatellite' | 'osm'
+  activeProvider: 'googleRoadmap',
+  mapboxToken: ''
 };
 
 const MAP_TILE_PROVIDERS = {
-  osm: {
-    name: 'OpenStreetMap (Resmi & Stabil)',
-    getUrl: () => 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  googleRoadmap: {
+    name: 'Google Maps Resmi (Jalan & Bangunan)',
+    getUrl: () => 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
     options: {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 22,
+      maxNativeZoom: 20,
+      attribution: '&copy; Google Maps'
     }
   },
-  esri: {
-    name: 'Peta Jalan ESRI World',
-    getUrl: () => 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-    options: { maxZoom: 19, attribution: 'Tiles &copy; Esri' }
-  },
-  mapboxSatellite: {
-    name: 'Citra Satelit ESRI HD',
-    getUrl: () => 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  googleSatellite: {
+    name: 'Google Citra Satelit + Nama Jalan',
+    getUrl: () => 'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
     options: {
-      maxZoom: 19,
-      attribution: '© Esri World Imagery'
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 22,
+      maxNativeZoom: 20,
+      attribution: '&copy; Google Maps'
+    }
+  },
+  osm: {
+    name: 'OpenStreetMap Global',
+    getUrl: () => 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    options: {
+      maxZoom: 20,
+      maxNativeZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
     }
   }
 };
@@ -1294,7 +1302,7 @@ let currentTileLayerInstance = null;
 
 function setMapTileProvider(providerKey) {
   if (!webState.map) return;
-  const provider = MAP_TILE_PROVIDERS[providerKey] || MAP_TILE_PROVIDERS.osm;
+  const provider = MAP_TILE_PROVIDERS[providerKey] || MAP_TILE_PROVIDERS.googleRoadmap;
   
   if (currentTileLayerInstance) {
     webState.map.removeLayer(currentTileLayerInstance);
@@ -1303,11 +1311,11 @@ function setMapTileProvider(providerKey) {
   const url = typeof provider.getUrl === 'function' ? provider.getUrl() : provider.url;
   currentTileLayerInstance = L.tileLayer(url, provider.options).addTo(webState.map);
 
-  // Auto-recovery jika ada tile bermasalah di HP
+  // Auto-recovery jika ada tile bermasalah di jaringan HP
   currentTileLayerInstance.on('tileerror', function() {
-    if (MAP_CONFIG.activeProvider !== 'osm') {
-      MAP_CONFIG.activeProvider = 'osm';
-      const fallbackProv = MAP_TILE_PROVIDERS.osm;
+    if (MAP_CONFIG.activeProvider !== 'googleRoadmap') {
+      MAP_CONFIG.activeProvider = 'googleRoadmap';
+      const fallbackProv = MAP_TILE_PROVIDERS.googleRoadmap;
       if (currentTileLayerInstance) webState.map.removeLayer(currentTileLayerInstance);
       currentTileLayerInstance = L.tileLayer(fallbackProv.getUrl(), fallbackProv.options).addTo(webState.map);
     }
@@ -1318,7 +1326,7 @@ function setMapTileProvider(providerKey) {
 
 function toggleMapLayerType() {
   const current = MAP_CONFIG.activeProvider;
-  const next = current === 'osm' ? 'esri' : current === 'esri' ? 'mapboxSatellite' : 'osm';
+  const next = current === 'googleRoadmap' ? 'googleSatellite' : current === 'googleSatellite' ? 'osm' : 'googleRoadmap';
   setMapTileProvider(next);
   const prov = MAP_TILE_PROVIDERS[next];
   showToast(`Tampilan peta: ${prov.name}`);
@@ -1638,7 +1646,8 @@ function initWebMap() {
 
   webState.map = L.map('web-leaflet-map', {
     zoomControl: false,
-    attributionControl: false
+    attributionControl: false,
+    maxZoom: 22
   }).setView([initialLat, initialLng], initialZoom);
 
   // Inisialisasi tile peta jernih tanpa watermark
