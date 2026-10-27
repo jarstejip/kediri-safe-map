@@ -1261,46 +1261,32 @@ function switchWebTab(tabName) {
 // MAP CONFIGURATION & MAPBOX ENTERPRISE INTEGRATION
 // ========================================================
 const MAP_CONFIG = {
-  // Provider aktif: 'esri' | 'osm' | 'mapbox' | 'satellite'
-  activeProvider: 'esri',
-  // Mapbox Public Access Token (dapat diisi via localStorage 'mapbox_token' atau dibiarkan kosong untuk ESRI/OSM)
+  // Provider aktif: 'osm' | 'esri' | 'mapboxSatellite'
+  activeProvider: 'osm',
   mapboxToken: localStorage.getItem('mapbox_token') || ''
 };
 
 const MAP_TILE_PROVIDERS = {
-  mapbox: {
-    name: 'Mapbox Streets v12 (Enterprise)',
-    getUrl: () => MAP_CONFIG.mapboxToken
-      ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/512/{z}/{x}/{y}@2x?access_token=${MAP_CONFIG.mapboxToken}`
-      : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+  osm: {
+    name: 'OpenStreetMap (Resmi & Stabil)',
+    getUrl: () => 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     options: {
-      maxZoom: 20,
-      tileSize: MAP_CONFIG.mapboxToken ? 512 : 256,
-      zoomOffset: MAP_CONFIG.mapboxToken ? -1 : 0,
-      attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © OpenStreetMap'
-    }
-  },
-  mapboxSatellite: {
-    name: 'Mapbox Citra Satelit HD',
-    getUrl: () => MAP_CONFIG.mapboxToken
-      ? `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/512/{z}/{x}/{y}@2x?access_token=${MAP_CONFIG.mapboxToken}`
-      : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    options: {
-      maxZoom: 20,
-      tileSize: MAP_CONFIG.mapboxToken ? 512 : 256,
-      zoomOffset: MAP_CONFIG.mapboxToken ? -1 : 0,
-      attribution: '© Mapbox © DigitalGlobe'
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
     }
   },
   esri: {
-    name: 'Peta Jalan (ESRI World)',
+    name: 'Peta Jalan ESRI World',
     getUrl: () => 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
     options: { maxZoom: 19, attribution: 'Tiles &copy; Esri' }
   },
-  osm: {
-    name: 'OpenStreetMap Resmi',
-    getUrl: () => 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    options: { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }
+  mapboxSatellite: {
+    name: 'Citra Satelit ESRI HD',
+    getUrl: () => 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    options: {
+      maxZoom: 19,
+      attribution: '© Esri World Imagery'
+    }
   }
 };
 
@@ -1308,7 +1294,7 @@ let currentTileLayerInstance = null;
 
 function setMapTileProvider(providerKey) {
   if (!webState.map) return;
-  const provider = MAP_TILE_PROVIDERS[providerKey] || MAP_TILE_PROVIDERS.mapbox;
+  const provider = MAP_TILE_PROVIDERS[providerKey] || MAP_TILE_PROVIDERS.osm;
   
   if (currentTileLayerInstance) {
     webState.map.removeLayer(currentTileLayerInstance);
@@ -1316,15 +1302,26 @@ function setMapTileProvider(providerKey) {
   
   const url = typeof provider.getUrl === 'function' ? provider.getUrl() : provider.url;
   currentTileLayerInstance = L.tileLayer(url, provider.options).addTo(webState.map);
+
+  // Auto-recovery jika ada tile bermasalah di HP
+  currentTileLayerInstance.on('tileerror', function() {
+    if (MAP_CONFIG.activeProvider !== 'osm') {
+      MAP_CONFIG.activeProvider = 'osm';
+      const fallbackProv = MAP_TILE_PROVIDERS.osm;
+      if (currentTileLayerInstance) webState.map.removeLayer(currentTileLayerInstance);
+      currentTileLayerInstance = L.tileLayer(fallbackProv.getUrl(), fallbackProv.options).addTo(webState.map);
+    }
+  });
+
   MAP_CONFIG.activeProvider = providerKey;
 }
 
 function toggleMapLayerType() {
   const current = MAP_CONFIG.activeProvider;
-  const next = current === 'mapbox' ? 'mapboxSatellite' : current === 'mapboxSatellite' ? 'osm' : 'mapbox';
+  const next = current === 'osm' ? 'esri' : current === 'esri' ? 'mapboxSatellite' : 'osm';
   setMapTileProvider(next);
   const prov = MAP_TILE_PROVIDERS[next];
-  showToast(`Tampilan peta diubah ke: ${prov.name}`);
+  showToast(`Tampilan peta: ${prov.name}`);
 }
 
 function updateMapboxToken(token) {
@@ -1646,6 +1643,11 @@ function initWebMap() {
 
   // Inisialisasi tile peta jernih tanpa watermark
   setMapTileProvider(MAP_CONFIG.activeProvider);
+
+  // Multi-step invalidateSize agar ukuran peta pas dan langsung muncul di browser HP
+  setTimeout(() => { if (webState.map) webState.map.invalidateSize(); }, 150);
+  setTimeout(() => { if (webState.map) webState.map.invalidateSize(); }, 400);
+  setTimeout(() => { if (webState.map) webState.map.invalidateSize(); }, 800);
 
   // Start High-Precision Realtime GPS Tracker
   startRealtimeGeolocation();
