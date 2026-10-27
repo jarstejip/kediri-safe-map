@@ -52,8 +52,9 @@ const webState = {
   }
 };
 
-// Kediri emergency & health facilities (Database Fasilitas Lengkap Kota Kediri)
+// Kediri emergency & health facilities (Database Fasilitas Lengkap Seluruh Kediri Raya)
 const kediriFacilities = [
+  // --- KOTA KEDIRI ---
   {
     id: 1,
     name: 'RSUD Gambiran Kediri',
@@ -209,6 +210,250 @@ const kediriFacilities = [
     color: '#ef4444',
     distance: '2.5 km dari Anda',
     status: 'Unit Darurat 24 Jam'
+  },
+
+  // --- KECAMATAN WATES & SEKITARNYA ---
+  {
+    id: 20,
+    name: 'RS Surya Melati Wates',
+    type: 'rs',
+    category: 'RUMAH SAKIT & IGD 24 JAM',
+    address: 'Jl. Raya Kediri - Wates KM.13, Tawang, Kec. Wates',
+    phone: '(0354) 442233',
+    lat: -7.9152,
+    lng: 112.1158,
+    color: '#ef4444',
+    distance: 'Dekat dengan Anda',
+    status: 'Buka 24 Jam (IGD Siaga)'
+  },
+  {
+    id: 21,
+    name: 'Puskesmas Wates (IGD 24 Jam)',
+    type: 'rs',
+    category: 'PUSKESMAS RAWAT INAP & IGD',
+    address: 'Jl. Raya Wates No.12, Kec. Wates, Kab. Kediri',
+    phone: '(0354) 441012',
+    lat: -7.9262,
+    lng: 112.1284,
+    color: '#ef4444',
+    distance: 'Dekat dengan Anda',
+    status: 'Buka 24 Jam (Siaga IGD)'
+  },
+  {
+    id: 22,
+    name: 'Klinik Rawat Inap Siti Khodijah Wates',
+    type: 'rs',
+    category: 'KLINIK RAWAT INAP & DOKTER',
+    address: 'Jl. Raya Gadungan, Kec. Wates, Kab. Kediri',
+    phone: '(0354) 441588',
+    lat: -7.9221,
+    lng: 112.1325,
+    color: '#ef4444',
+    distance: 'Dekat dengan Anda',
+    status: 'Buka 24 Jam'
+  },
+  {
+    id: 23,
+    name: 'Apotek Wates Farma',
+    type: 'apotek',
+    category: 'APOTEK SIAGA',
+    address: 'Jl. Raya Wates (Area Pasar Wates)',
+    phone: '(0354) 441999',
+    lat: -7.9255,
+    lng: 112.1302,
+    color: '#10b981',
+    distance: 'Dekat dengan Anda',
+    status: 'Buka 07:00 - 22:00'
+  },
+  {
+    id: 24,
+    name: 'Polsek Wates (Posko Siaga)',
+    type: 'keamanan',
+    category: 'KEAMANAN & KEPOLISIAN',
+    address: 'Jl. Raya Wates, Kec. Wates, Kab. Kediri',
+    phone: '110 / (0354) 441110',
+    lat: -7.9248,
+    lng: 112.1278,
+    color: '#2563eb',
+    distance: 'Dekat dengan Anda',
+    status: 'Siaga 24 Jam'
+  },
+
+  // --- KECAMATAN PARE & GURAH ---
+  {
+    id: 25,
+    name: 'RSUD Kabupaten Kediri (RSKK Pare)',
+    type: 'rs',
+    category: 'RUMAH SAKIT UMUM DAERAH',
+    address: 'Jl. Pahlawan Kusuma Bangsa No.1, Kec. Pare',
+    phone: '(0354) 391718',
+    lat: -7.7685,
+    lng: 112.1950,
+    color: '#ef4444',
+    distance: 'Area Pare',
+    status: 'Buka 24 Jam (IGD Utama)'
+  },
+  {
+    id: 26,
+    name: 'RS HVA Toeloengredjo Pare',
+    type: 'rs',
+    category: 'RUMAH SAKIT & IGD',
+    address: 'Jl. Ahmad Yani No.25, Kec. Pare',
+    phone: '(0354) 391047',
+    lat: -7.7610,
+    lng: 112.1915,
+    color: '#ef4444',
+    distance: 'Area Pare',
+    status: 'Buka 24 Jam'
+  },
+  {
+    id: 27,
+    name: 'RS Amelia Pare',
+    type: 'rs',
+    category: 'RUMAH SAKIT & IGD',
+    address: 'Jl. Pahlawan No.25A, Kec. Pare',
+    phone: '(0354) 394118',
+    lat: -7.7712,
+    lng: 112.1880,
+    color: '#ef4444',
+    distance: 'Area Pare',
+    status: 'Buka 24 Jam'
+  },
+  {
+    id: 28,
+    name: 'RS Siti Khadijah Gurah',
+    type: 'rs',
+    category: 'RUMAH SAKIT & IGD',
+    address: 'Jl. Raya Gurah - Pare, Kec. Gurah',
+    phone: '(0354) 545112',
+    lat: -7.8182,
+    lng: 112.1055,
+    color: '#ef4444',
+    distance: 'Area Gurah',
+    status: 'Buka 24 Jam'
+  },
+  {
+    id: 29,
+    name: 'Puskesmas Gurah',
+    type: 'rs',
+    category: 'PUSKESMAS & IGD',
+    address: 'Jl. Dr. Wahidin Sudirohusodo, Kec. Gurah',
+    phone: '(0354) 545012',
+    lat: -7.8285,
+    lng: 112.0950,
+    color: '#ef4444',
+    distance: 'Area Gurah',
+    status: 'Buka 24 Jam'
+  },
+
+  // --- KECAMATAN NGADILUWIH, KRAS & KANDAT ---
+  {
+    id: 30,
+    name: 'RS Arga Husada Ngadiluwih',
+    type: 'rs',
+    category: 'RUMAH SAKIT & IGD',
+    address: 'Jl. Raya Ngadiluwih No.65, Branggahan',
+    phone: '(0354) 479155',
+    lat: -7.8920,
+    lng: 112.0125,
+    color: '#ef4444',
+    distance: 'Area Ngadiluwih',
+    status: 'Buka 24 Jam'
+  },
+  {
+    id: 31,
+    name: 'Puskesmas Ngadiluwih',
+    type: 'rs',
+    category: 'PUSKESMAS & IGD',
+    address: 'Jl. Prof. Dr. Moestopo, Kec. Ngadiluwih',
+    phone: '(0354) 479012',
+    lat: -7.8985,
+    lng: 112.0088,
+    color: '#ef4444',
+    distance: 'Area Ngadiluwih',
+    status: 'Buka 24 Jam'
+  },
+  {
+    id: 32,
+    name: 'Puskesmas Kandat',
+    type: 'rs',
+    category: 'PUSKESMAS & IGD',
+    address: 'Jl. Raya Kandat, Kec. Kandat',
+    phone: '(0354) 411012',
+    lat: -7.9355,
+    lng: 112.0250,
+    color: '#ef4444',
+    distance: 'Area Kandat',
+    status: 'Buka 24 Jam'
+  },
+  {
+    id: 33,
+    name: 'Puskesmas Kras',
+    type: 'rs',
+    category: 'PUSKESMAS & IGD',
+    address: 'Jl. Raya Kras, Kec. Kras',
+    phone: '(0354) 479900',
+    lat: -7.9620,
+    lng: 111.9950,
+    color: '#ef4444',
+    distance: 'Area Kras',
+    status: 'Buka 24 Jam'
+  },
+
+  // --- KECAMATAN PLOSOKLATEN & RINGINREJO ---
+  {
+    id: 34,
+    name: 'Puskesmas Plosoklaten',
+    type: 'rs',
+    category: 'PUSKESMAS & IGD',
+    address: 'Jl. Raya Plosoklaten, Kec. Plosoklaten',
+    phone: '(0354) 491012',
+    lat: -7.8780,
+    lng: 112.1810,
+    color: '#ef4444',
+    distance: 'Area Plosoklaten',
+    status: 'Buka 24 Jam'
+  },
+
+  // --- BARAT SUNGAI & KAWASAN BANDARA DHOHO (BANYAKAN, GROGOL, MOJO) ---
+  {
+    id: 35,
+    name: 'RS Dhoho Kediri (Kawasan Bandara)',
+    type: 'rs',
+    category: 'RUMAH SAKIT & IGD',
+    address: 'Kawasan Bandara Internasional Dhoho, Kec. Banyakan',
+    phone: '(0354) 741122',
+    lat: -7.7925,
+    lng: 111.9680,
+    color: '#ef4444',
+    distance: 'Kawasan Bandara',
+    status: 'Buka 24 Jam'
+  },
+  {
+    id: 36,
+    name: 'Puskesmas Grogol',
+    type: 'rs',
+    category: 'PUSKESMAS & IGD',
+    address: 'Jl. Raya Grogol, Kec. Grogol',
+    phone: '(0354) 771012',
+    lat: -7.7550,
+    lng: 111.9820,
+    color: '#ef4444',
+    distance: 'Area Grogol',
+    status: 'Buka 24 Jam'
+  },
+  {
+    id: 37,
+    name: 'Puskesmas Mojo',
+    type: 'rs',
+    category: 'PUSKESMAS & IGD',
+    address: 'Jl. Raya Mojo, Kec. Mojo',
+    phone: '(0354) 481012',
+    lat: -7.9012,
+    lng: 111.9540,
+    color: '#ef4444',
+    distance: 'Area Mojo',
+    status: 'Buka 24 Jam'
   }
 ];
 
@@ -1362,33 +1607,129 @@ function formatLiveDistance(distKm) {
 }
 
 function updateFacilitiesWithLiveLocation(lat, lng) {
+  // 1. Hitung jarak untuk semua fasilitas di Kediri Raya
   kediriFacilities.forEach(f => {
     const distKm = calculateDistanceKm(lat, lng, f.lat, f.lng);
     f.rawDistanceKm = distKm;
     f.distance = formatLiveDistance(distKm);
   });
 
-  // Perbarui popup marker di peta jika aktif
+  // 2. Urutkan fasilitas dari yang PALING DEKAT secara otomatis
+  kediriFacilities.sort((a, b) => a.rawDistanceKm - b.rawDistanceKm);
+
+  // 3. Render kartu fasilitas terdekat ke drawer bawah secara dinamis
+  renderDrawerFacilityCards();
+
+  // 4. Deteksi nama Desa / Kecamatan pengguna secara real-time
+  fetchUserVillageName(lat, lng);
+
+  // 5. Cari fasilitas kesehatan tambahan via OpenStreetMap di sekitar lokasi user
+  fetchLiveNearbyFromOSM(lat, lng);
+
+  // 6. Perbarui marker peta sesuai filter aktif
   const activePill = document.querySelector('.filter-pill.active');
   const type = activePill ? activePill.id.replace('pill-', '') : 'all';
   renderWebFacilities(type);
-
-  // Perbarui jarak di kartu bawah
-  updateDrawerFacilityCards();
 }
 
-function updateDrawerFacilityCards() {
-  document.querySelectorAll('.facility-web-card').forEach(card => {
-    const match = card.getAttribute('onclick')?.match(/focusFacilityOnMap\((\d+)\)/);
-    if (match) {
-      const id = parseInt(match[1]);
-      const fac = kediriFacilities.find(f => f.id === id);
-      if (fac) {
-        const distEl = card.querySelector('.facility-distance');
-        if (distEl) distEl.textContent = `• ${fac.distance}`;
+// Render dinamis kartu fasilitas terdekat
+function renderDrawerFacilityCards() {
+  const container = document.querySelector('.cards-grid-row');
+  if (!container) return;
+
+  // Tampilkan 6 fasilitas darurat terdekat dari posisi pengguna saat ini
+  const topNearby = kediriFacilities.slice(0, 6);
+
+  container.innerHTML = topNearby.map(item => `
+    <div class="facility-web-card" onclick="focusFacilityOnMap(${item.id})" title="Klik untuk melihat di peta">
+      <span class="badge-cat-cyan">${item.category}</span>
+      <h3 class="facility-heading">${item.name}</h3>
+      <p class="facility-distance">• ${item.distance || 'Menghitung jarak...'}</p>
+      <div class="card-bottom-actions">
+        <span class="facility-open-tag">${item.status}</span>
+        <button type="button" class="btn-card-start-nav" onclick="event.stopPropagation(); startNavigationToFacility(${item.id})" title="Mulai Navigasi">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>Mulai</span>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Deteksi nama desa / kecamatan pengguna
+let lastGeocodedCoord = null;
+async function fetchUserVillageName(lat, lng) {
+  if (lastGeocodedCoord && calculateDistanceKm(lat, lng, lastGeocodedCoord.lat, lastGeocodedCoord.lng) < 0.5) {
+    return;
+  }
+  lastGeocodedCoord = { lat, lng };
+
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+    if (res.ok) {
+      const data = await res.json();
+      const addr = data.address || {};
+      const village = addr.village || addr.suburb || addr.quarter || addr.hamlet || '';
+      const town = addr.town || addr.city_district || addr.municipality || addr.county || 'Kediri';
+      
+      const locText = village ? `${village}, Kec. ${town}` : `Kecamatan ${town}`;
+      const subTitle = document.querySelector('.drawer-sub');
+      if (subTitle) {
+        subTitle.textContent = `📍 Lokasi Anda: ${locText} (Fasilitas diurutkan otomatis dari yang paling dekat)`;
+      }
+      const drawerTitle = document.querySelector('.drawer-title');
+      if (drawerTitle) {
+        drawerTitle.textContent = `Fasilitas Terdekat di Sekitar Anda (${village || town})`;
       }
     }
-  });
+  } catch (err) {}
+}
+
+// Cari fasilitas kesehatan terdekat tambahan via Photon Komoot API
+let hasFetchedLiveNearby = false;
+async function fetchLiveNearbyFromOSM(lat, lng) {
+  if (hasFetchedLiveNearby) return;
+  hasFetchedLiveNearby = true;
+
+  try {
+    const res = await fetch(`https://photon.komoot.io/api/?q=rumah+sakit&lat=${lat}&lon=${lng}&limit=4`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.features && data.features.length) {
+        data.features.forEach(feat => {
+          const props = feat.properties || {};
+          const geom = feat.geometry || {};
+          const name = props.name;
+          const coords = geom.coordinates;
+          if (name && coords && coords.length >= 2) {
+            const fLng = coords[0];
+            const fLat = coords[1];
+            const exists = kediriFacilities.some(f => f.name.toLowerCase().includes(name.toLowerCase()));
+            if (!exists) {
+              const distKm = calculateDistanceKm(lat, lng, fLat, fLng);
+              const newId = 100 + kediriFacilities.length;
+              kediriFacilities.push({
+                id: newId,
+                name: name,
+                type: 'rs',
+                category: 'FASILITAS KESEHATAN SEKITAR',
+                address: props.street ? `${props.street}, ${props.city || ''}` : 'Di sekitar lokasi Anda',
+                phone: '112 / Hubungi Langsung',
+                lat: fLat,
+                lng: fLng,
+                color: '#ef4444',
+                rawDistanceKm: distKm,
+                distance: formatLiveDistance(distKm),
+                status: 'Buka Siaga'
+              });
+            }
+          }
+        });
+        kediriFacilities.sort((a, b) => a.rawDistanceKm - b.rawDistanceKm);
+        renderDrawerFacilityCards();
+      }
+    }
+  } catch (e) {}
 }
 
 function copyUserCoords() {
