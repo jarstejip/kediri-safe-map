@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kediri Safe Map - Peta Aman Kota Kediri</title>
+  <meta name="description" content="Kediri Safe Map: Sistem Informasi & Peta Tanggap Darurat Kota Kediri.">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=2">
+</head>
+<body>
+
+  <!-- ========================================================
+       SECTION 1: AUTHENTICATION PAGE (Sign In / Sign Up)
+       Tampilan Web Penuh Bersih Sesuai Figma iPhone 17 - 1 & Sign Up
+       ======================================================== -->
+  <main id="auth-screen" class="screen-view active">
+    <div class="auth-web-container">
+      <div class="auth-card">
+
+        <!-- Logo Kediri Safe Map (Official Logo) -->
+        <div class="auth-brand">
+          <img src="assets/img/logo-emblem.svg" alt="Logo Kediri Safe Map" class="brand-crest-img">
+          <div class="brand-crest-col">
+            <span class="crest-text">KEDIRI<br>SAFE MAP</span>
+          </div>
+          <span class="brand-text">Kediri Safe Map</span>
+        </div>
+
+        <!-- Heading & Subtitle -->
+        <h1 class="auth-heading">welcome to kediri safe map</h1>
+        <p class="auth-subheading">start your experience with save kediri maps by singin in or signin up</p>
+
+        <!-- Tabs: Sign In / Sign Up -->
+        <div class="auth-tabs-group">
+          <div class="tabs-pill">
+            <button type="button" class="tab-btn active" id="tab-btn-signin" onclick="switchAuthTab('signin')">Sign In</button>
+            <button type="button" class="tab-btn" id="tab-btn-signup" onclick="switchAuthTab('signup')">Sign Up</button>
+          </div>
+        </div>
+
+        <!-- FORM 1: SIGN IN -->
+        <form id="form-signin" onsubmit="handleSignIn(event)">
+          <div class="form-group">
+            <label class="form-label" for="signin-email">Email Addres *</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="2" y="4" width="20" height="16" rx="3"/>
+                  <path d="M22 6L12 13 2 6"/>
+                </svg>
+              </span>
+              <input type="email" id="signin-email" class="form-control" placeholder="Enter Your Email Addres" value="onlymc75@gmail.com" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="signin-pass">Password *</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/>
+                  <path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+              </span>
+              <input type="password" id="signin-pass" class="form-control" placeholder="Enter Your Password" value="••••••••" required>
+              <button type="button" class="toggle-eye-btn" onclick="togglePasswordVisibility('signin-pass', this)" aria-label="Toggle password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-green-pill">Sign In</button>
+        </form>
+
+        <!-- FORM 2: SIGN UP -->
+        <form id="form-signup" style="display:none;" onsubmit="handleSignUp(event)">
+          <div class="form-group">
+            <label class="form-label" for="signup-name">Full Name *</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <input type="text" id="signup-name" class="form-control" placeholder="Enter Your Full Name" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="signup-email">Email Addres *</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="2" y="4" width="20" height="16" rx="3"/>
+                  <path d="M22 6L12 13 2 6"/>
+                </svg>
+              </span>
+              <input type="email" id="signup-email" class="form-control" placeholder="Enter Your Email Addres" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="signup-pass">Password *</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/>
+                  <path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+              </span>
+              <input type="password" id="signup-pass" class="form-control" placeholder="Enter Your Password" required>
+              <button type="button" class="toggle-eye-btn" onclick="togglePasswordVisibility('signup-pass', this)" aria-label="Toggle password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="signup-confirm">Confirm Password *</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/>
+                  <path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+              </span>
+              <input type="password" id="signup-confirm" class="form-control" placeholder="Confirm Your Password" required>
+              <button type="button" class="toggle-eye-btn" onclick="togglePasswordVisibility('signup-confirm', this)" aria-label="Toggle password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- BIOMETRIC FACE RECOGNITION (ANTI-FRAUD AI VERIFICATION) -->
+          <div class="biometric-auth-box" id="biometric-signup-box">
+            <div class="biometric-header">
+              <div class="biometric-badge">
+                <span class="biometric-pulse-dot"></span>
+                <span>ANTI-FRAUD BIOMETRIC AI</span>
+              </div>
+              <span class="biometric-title">Verifikasi Wajah Asli (Wajib)</span>
+            </div>
+            <p class="biometric-desc">
+              Untuk mencegah pendaftaran akun fiktif &amp; laporan palsu, warga diwajibkan melakukan pemindaian wajah biometrik asli.
+            </p>
+
+            <!-- Face Scanner Viewport -->
+            <div class="face-scanner-viewport" id="face-scanner-viewport">
+              <video id="face-video" autoplay playsinline muted style="display:none;"></video>
+              <canvas id="face-canvas" style="display:none;"></canvas>
+
+              <!-- State 1: Placeholder Sebelum Kamera Dibuka -->
+              <div class="face-placeholder" id="face-placeholder">
+                <div class="face-hud-circle">
+                  <svg class="face-mesh-svg" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="44" stroke="currentColor" stroke-dasharray="4 4" fill="none" stroke-width="1.5"/>
+                    <path d="M35 45 Q50 35 65 45" stroke="currentColor" fill="none" stroke-width="1.5"/>
+                    <circle cx="40" cy="45" r="3" fill="currentColor"/>
+                    <circle cx="60" cy="45" r="3" fill="currentColor"/>
+                    <path d="M42 65 Q50 72 58 65" stroke="currentColor" fill="none" stroke-width="1.8"/>
+                  </svg>
+                </div>
+                <span class="face-guide-text">Kamera Biometrik Siap</span>
+              </div>
+
+              <!-- State 2: Active Scanner HUD Overlay -->
+              <div class="face-hud-overlay" id="face-hud-overlay" style="display:none;">
+                <div class="face-target-oval">
+                  <div class="face-scan-line"></div>
+                  <div class="face-bracket tl"></div>
+                  <div class="face-bracket tr"></div>
+                  <div class="face-bracket bl"></div>
+                  <div class="face-bracket br"></div>
+                </div>
+              </div>
+
+              <!-- State 3: Captured Verified Preview -->
+              <div class="face-captured-preview" id="face-captured-preview" style="display:none;">
+                <img id="face-preview-img" alt="Foto Wajah Terverifikasi">
+                <div class="face-verified-stamp">
+                  <span class="stamp-icon">✓</span>
+                  <span class="stamp-text">TERVERIFIKASI BIOMETRIK</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Status Indicator -->
+            <div class="face-status-indicator" id="face-status-indicator">
+              <span class="status-dot warning" id="face-status-dot"></span>
+              <span id="face-status-text">Wajah belum diverifikasi biometrik</span>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="face-scanner-actions">
+              <button type="button" class="btn-face-action" id="btn-start-camera" onclick="startFaceCamera()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+                <span>Buka Kamera &amp; Scan Wajah</span>
+              </button>
+              <button type="button" class="btn-face-capture" id="btn-capture-face" style="display:none;" onclick="captureAndVerifyFace()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                <span>Ambil &amp; Verifikasi Biometrik</span>
+              </button>
+              <button type="button" class="btn-face-retake" id="btn-retake-face" style="display:none;" onclick="retakeFaceVerification()">
+                <span>Scan Ulang</span>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-green-pill">Sign Up &amp; Aktivasi Akun</button>
+        </form>
+
+        <!-- Divider -->
+        <div class="or-separator">
+          <span>Or continue with</span>
+        </div>
+
+        <!-- Social Buttons -->
+        <div class="social-login-group">
+          <button type="button" class="btn-social-google" onclick="initiateGoogleLogin()" aria-label="Google Login" title="Masuk dengan Google Resmi">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            <span>Masuk dengan Google</span>
+          </button>
+        </div>
+
+        <!-- Quick entry button for reviewer -->
+        <div class="guest-skip-box">
+          <button type="button" class="guest-link" onclick="enterAppDirectly()">Langsung Buka Peta &amp; Aplikasi &rarr;</button>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================
+       SECTION 2: MAIN WEB APPLICATION
+       Tampilan Web Penuh: Navbar Atas, Peta, SOS, Profil
+       ======================================================== -->
+  <div id="main-web-app" class="screen-view">
+
+    <!-- Top Web Navigation Bar -->
+    <header class="app-navbar">
+      <div class="navbar-left">
+        <div class="navbar-brand-item" onclick="switchWebTab('map')">
+          <img src="assets/img/logo-emblem.svg" alt="Logo Kediri Safe Map" class="nav-brand-logo">
+          <div class="brand-titles">
+            <span class="main-title">Kediri Safe Map</span>
+            <span class="sub-title">SATU PETA SATU INFORMASI</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop Nav Links -->
+      <nav class="navbar-center">
+        <button type="button" class="nav-link-btn active" id="nav-btn-map" onclick="switchWebTab('map')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+            <line x1="8" y1="2" x2="8" y2="18"/>
+            <line x1="16" y1="6" x2="16" y2="22"/>
+          </svg>
+          <span>Peta Fasilitas</span>
+        </button>
+        <button type="button" class="nav-link-btn sos-style" id="nav-btn-sos" onclick="switchWebTab('sos')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span>SOS &amp; Laporan</span>
+          <span class="badge-red-dot"></span>
+        </button>
+        <button type="button" class="nav-link-btn" id="nav-btn-profile" onclick="switchWebTab('profile')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span>Profil Saya</span>
+        </button>
+      </nav>
+
+      <!-- Navbar Right (Tools & User Profile) -->
+      <div class="navbar-right">
+        <button type="button" class="icon-circle-btn" onclick="toggleTheme()" title="Ubah Tema Gelap / Terang">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+          </svg>
+        </button>
+
+        <!-- Interactive Notification Bell Container -->
+        <div class="notif-bell-container rel-box" id="notif-bell-container">
+          <button type="button" class="icon-circle-btn" id="btn-navbar-notif" onclick="event.stopPropagation(); toggleNotificationDropdown(event)" title="Notifikasi Sistem Siaga Kediri" aria-label="Notifikasi">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 01-3.46 0"/>
+            </svg>
+            <span class="badge-red-dot" id="notif-red-badge"></span>
+          </button>
+
+          <!-- Notification Dropdown Popover -->
+          <div class="notif-dropdown-card" id="notification-dropdown" style="display: none;" onclick="event.stopPropagation()">
+            <div class="notif-dropdown-header">
+              <div class="notif-header-title-box">
+                <div class="notif-title-row">
+                  <span class="notif-title-main">Notifikasi Siaga</span>
+                  <span class="notif-unread-pill" id="notif-unread-count-pill">3 Baru</span>
+                </div>
+                <span class="notif-title-sub">Pusat kendali dan informasi darurat Kota Kediri</span>
+              </div>
+              <button type="button" class="notif-mark-read-btn" onclick="markAllNotificationsRead()" title="Tandai semua notifikasi sudah dibaca">
+                Tandai Dibaca
+              </button>
+            </div>
+
+            <!-- Live Government Sync Strip (BMKG & BPBD) -->
+            <div class="notif-gov-sync-strip" id="notif-gov-sync-strip">
+              <span class="gov-live-dot"></span>
+              <span class="gov-live-text" id="gov-sync-status-text">Live BMKG &amp; BPBD RI Terhubung</span>
+              <button type="button" class="btn-refresh-gov" onclick="syncGovernmentAlertsNow(true)" title="Sinkronkan data darurat terkini dari BMKG &amp; BPBD">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                <span>Sync</span>
+              </button>
+            </div>
+
+            <!-- Chips Category Filter -->
+            <div class="notif-chips-filter">
+              <button type="button" class="notif-chip active" id="notif-chip-all" onclick="filterNotificationCategory('all', this)">Semua</button>
+              <button type="button" class="notif-chip" id="notif-chip-gov" onclick="filterNotificationCategory('pemerintah', this)">🏛️ Resmi Pemerintah</button>
+              <button type="button" class="notif-chip" id="notif-chip-darurat" onclick="filterNotificationCategory('darurat', this)">Siaga &amp; Darurat</button>
+              <button type="button" class="notif-chip" id="notif-chip-layanan" onclick="filterNotificationCategory('layanan', this)">Layanan Publik</button>
+            </div>
+
+            <!-- Notification Items Scrollable Body -->
+            <div class="notif-items-body" id="notif-items-body">
+              <!-- Rendered dynamically by JS -->
+            </div>
+
+            <!-- Footer Action -->
+            <div class="notif-dropdown-footer">
+              <button type="button" class="notif-footer-link" onclick="closeNotificationDropdown(); switchWebTab('sos');">
+                <span>Buka Layanan Darurat Siaga 112 &amp; SOS</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="user-chip" onclick="switchWebTab('profile')">
+          <div class="user-avatar-sm">FK</div>
+          <span class="user-name-label">Fajar Kencana</span>
+        </div>
+
+        <button type="button" class="btn-logout-head" onclick="logoutToAuth()" title="Keluar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          <span>Keluar</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTENT VIEWS -->
+    <div class="web-content-body">
+
+      <!-- ========================================================
+           TAB 1: PETA INTERAKTIF KEDIRI (Figma iPhone 17 - 2 Full Web)
+           ======================================================== -->
+      <section id="tab-view-map" class="tab-page-view active">
+        <!-- Map Search & Category Floating Header -->
+        <div class="map-query-toolbar">
+          <div class="search-input-pill">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" id="map-search-bar" placeholder="Cari fasilitas terdekat di Kediri (RS, Apotek, Shelter)..." oninput="handleMapSearch(this.value)">
+          </div>
+
+          <div class="chips-filter-row">
+            <button type="button" class="filter-pill active" id="pill-all" onclick="filterMapFacilities('all', this)">Semua</button>
+            <button type="button" class="filter-pill" id="pill-rs" onclick="filterMapFacilities('rs', this)">
+              <span class="dot-red"></span> RS &amp; IGD
+            </button>
+            <button type="button" class="filter-pill" id="pill-apotek" onclick="filterMapFacilities('apotek', this)">
+              <span class="dot-green"></span> Apotek
+            </button>
+            <button type="button" class="filter-pill" id="pill-shelter" onclick="filterMapFacilities('shelter', this)">
+              <span class="dot-orange"></span> Shelter
+            </button>
+          </div>
+        </div>
+
+        <!-- Full Map Area -->
+        <div id="web-leaflet-map"></div>
+
+        <!-- Realtime High-Precision GPS Pill Indicator -->
+        <div id="map-gps-live-pill" class="map-gps-live-pill searching" onclick="centerToUserLocation()" title="GPS Realtime: Klik untuk pusatkan ke lokasi Anda">
+          <span class="gps-pulse-dot searching" id="gps-pulse-dot"></span>
+          <span id="map-gps-live-text">Mencari GPS Presisi...</span>
+        </div>
+
+        <!-- Map Controls -->
+        <div class="map-floating-actions">
+          <button type="button" class="map-action-btn" onclick="toggleMapLayerType()" id="btn-toggle-layer" title="Ganti Tampilan Peta (ESRI Jalan / Citra Satelit / OpenStreetMap)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+              <polyline points="2 17 12 22 22 17"/>
+              <polyline points="2 12 12 17 22 12"/>
+            </svg>
+          </button>
+          <button type="button" class="map-action-btn" onclick="centerToUserLocation()" title="Pusatkan ke lokasi saya">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5">
+              <circle cx="12" cy="12" r="8"/>
+              <line x1="12" y1="2" x2="12" y2="6"/>
+              <line x1="12" y1="18" x2="12" y2="22"/>
+              <line x1="2" y1="12" x2="6" y2="12"/>
+              <line x1="18" y1="12" x2="22" y2="12"/>
+              <circle cx="12" cy="12" r="2.5" fill="#15803d"/>
+            </svg>
+          </button>
+          <div class="zoom-pill-box">
+            <button type="button" class="btn-zoom" onclick="zoomInMap()" aria-label="Perbesar">+</button>
+            <button type="button" class="btn-zoom" onclick="zoomOutMap()" aria-label="Perkecil">−</button>
+          </div>
+        </div>
+
+        <!-- GOOGLE MAPS STYLE NAVIGATION HUD -->
+        <div id="nav-mode-hud" class="nav-hud-container" style="display: none;">
+          <!-- Top Green Direction Instruction Card (Google Maps Green Header) -->
+          <div class="nav-top-banner">
+            <div class="nav-turn-icon-wrap" id="nav-turn-icon-wrap">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </div>
+            <div class="nav-instruction-details">
+              <div class="nav-next-distance" id="nav-next-distance">Memulai...</div>
+              <div class="nav-next-action" id="nav-next-action">Menghitung rute tercepat...</div>
+              <div class="nav-sub-action" id="nav-sub-action">Menuju lokasi tujuan</div>
+            </div>
+            <div class="nav-top-actions">
+              <button type="button" class="btn-nav-icon active" id="btn-nav-voice" onclick="toggleNavVoice()" title="Suara Panduan Arah">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Bottom Floating HUD Panel (ETA, Distance, Stop, Simulation, Steps) -->
+          <div class="nav-bottom-panel">
+            <div class="nav-info-row">
+              <div class="nav-time-group">
+                <span class="nav-eta-minutes" id="nav-eta-minutes">-- min</span>
+                <span class="nav-eta-sub" id="nav-eta-sub">-- km • Tiba --:--</span>
+              </div>
+              <div class="nav-target-name-badge">
+                <span class="dot-live-green"></span>
+                <span id="nav-target-name">Tujuan</span>
+              </div>
+            </div>
+
+            <div class="nav-actions-row">
+              <button type="button" class="btn-nav-sim" id="btn-nav-sim" onclick="toggleRouteSimulation()" title="Mulai simulasi laju kendaraan">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span id="btn-sim-label">Simulasi Jalan</span>
+              </button>
+              
+              <button type="button" class="btn-nav-steps" onclick="toggleNavStepsModal()" title="Lihat semua petunjuk belokan">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="8" y1="6" x2="21" y2="6"></line>
+                  <line x1="8" y1="12" x2="21" y2="12"></line>
+                  <line x1="8" y1="18" x2="21" y2="18"></line>
+                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+                <span>Petunjuk</span>
+              </button>
+
+              <button type="button" class="btn-nav-recenter" onclick="recenterNavMap()" title="Pusatkan posisi kamera ke kendaraan">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                </svg>
+              </button>
+
+              <button type="button" class="btn-nav-stop" onclick="stopNavigationMode()" title="Hentikan Navigasi">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                <span>Keluar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Petunjuk Langkah Navigasi -->
+        <div id="modal-nav-steps" class="oauth-modal-overlay" onclick="if(event.target===this) toggleNavStepsModal()">
+          <div class="directory-modal-card" style="max-width:540px;">
+            <div class="directory-modal-header" style="background:linear-gradient(135deg, #0d652d 0%, #15803d 100%);color:#ffffff;border-bottom:1px solid rgba(255,255,255,0.2);">
+              <div>
+                <h3 style="margin:0;font-size:16px;color:#ffffff;font-weight:800;">Petunjuk Arah Rute</h3>
+                <span style="font-size:12px;color:#bbf7d0;" id="nav-steps-target-title">Panduan Navigasi Kediri Safe Map</span>
+              </div>
+              <button type="button" class="btn-close-modal" style="background:rgba(255,255,255,0.2);color:#ffffff;" onclick="toggleNavStepsModal()" title="Tutup">&times;</button>
+            </div>
+            <div class="directory-modal-body" id="nav-steps-list-body" style="padding:16px;max-height:60vh;overflow-y:auto;">
+              <!-- steps list rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Facility Drawer (Figma Cards) -->
+        <div class="facilities-drawer" id="main-facilities-drawer">
+          <div class="drawer-header">
+            <div class="drawer-title-group">
+              <span class="drawer-title">Fasilitas Terdekat di Kediri</span>
+              <span class="drawer-sub">Menampilkan data siaga dan rute real-time</span>
+            </div>
+            <button type="button" class="drawer-link-btn" onclick="openAllFacilitiesModal()" title="Buka direktori lengkap fasilitas Kota Kediri">Lihat Semua</button>
+          </div>
+          <div class="cards-grid-row">
+            <div class="facility-web-card" onclick="focusFacilityOnMap(1)" title="Klik untuk melihat di peta">
+              <span class="badge-cat-cyan">RUMAH SAKIT &amp; IGD</span>
+              <h3 class="facility-heading">RSUD Gambiran Kediri</h3>
+              <p class="facility-distance">• 1.2 km dari Anda</p>
+              <div class="card-bottom-actions">
+                <span class="facility-open-tag">Buka 24 Jam</span>
+                <button type="button" class="btn-card-start-nav" onclick="event.stopPropagation(); startNavigationToFacility(1)" title="Mulai Navigasi">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <span>Mulai</span>
+                </button>
+              </div>
+            </div>
+            <div class="facility-web-card" onclick="focusFacilityOnMap(5)" title="Klik untuk melihat di peta">
+              <span class="badge-cat-cyan">APOTEK SIAGA</span>
+              <h3 class="facility-heading">Kimia Farma Dhoho</h3>
+              <p class="facility-distance">• 350 m dari Anda</p>
+              <div class="card-bottom-actions">
+                <span class="facility-open-tag">Buka Siaga</span>
+                <button type="button" class="btn-card-start-nav" onclick="event.stopPropagation(); startNavigationToFacility(5)" title="Mulai Navigasi">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <span>Mulai</span>
+                </button>
+              </div>
+            </div>
+            <div class="facility-web-card" onclick="focusFacilityOnMap(2)" title="Klik untuk melihat di peta">
+              <span class="badge-cat-cyan">RUMAH SAKIT &amp; IGD</span>
+              <h3 class="facility-heading">RS Bhayangkara</h3>
+              <p class="facility-distance">• 2.1 km dari Anda</p>
+              <div class="card-bottom-actions">
+                <span class="facility-open-tag">Buka 24 Jam</span>
+                <button type="button" class="btn-card-start-nav" onclick="event.stopPropagation(); startNavigationToFacility(2)" title="Mulai Navigasi">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <span>Mulai</span>
+                </button>
+              </div>
+            </div>
+            <div class="facility-web-card" onclick="focusFacilityOnMap(8)" title="Klik untuk melihat di peta">
+              <span class="badge-cat-cyan">TEMPAT IBADAH &amp; EVAKUASI</span>
+              <h3 class="facility-heading">Masjid Agung Kediri</h3>
+              <p class="facility-distance">• 850 m dari Anda</p>
+              <div class="card-bottom-actions">
+                <span class="facility-open-tag">Buka Setiap Waktu</span>
+                <button type="button" class="btn-card-start-nav" onclick="event.stopPropagation(); startNavigationToFacility(8)" title="Mulai Navigasi">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <span>Mulai</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================
+           TAB 2: DARURAT & LAPORAN (Figma iPhone 17 - 3 Full Web)
+           ======================================================== -->
+      <section id="tab-view-sos" class="tab-page-view">
+        <div class="page-max-container">
+
+          <!-- Section Banner -->
+          <div class="sos-web-header">
+            <div class="sos-icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10h2v4h-2zm0 6h2v2h-2z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="sos-head-title">Darurat &amp; Laporan</h2>
+              <span class="sos-head-sub">LAYANAN SIAGA KOTA KEDIRI</span>
+            </div>
+          </div>
+
+          <div class="sos-grid-layout">
+            <!-- Left Column: SOS Trigger & WhatsApp -->
+            <div class="sos-left-panel">
+              <div class="sos-circle-container">
+                <div class="ring-outer">
+                  <div class="ring-middle">
+                    <button type="button" class="btn-giant-sos" onclick="triggerSosCall()">
+                      <span class="sos-large-txt">SOS</span>
+                      <span class="sos-small-txt">PANGGIL</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="alert-box-pink">
+                  <div class="check-bubble-red">✓</div>
+                  <div>
+                    <div class="alert-pink-title">Pusat Bantuan Darurat Terpadu</div>
+                    <div class="alert-pink-desc">Tekan SOS untuk menghubungkan ke Siaga 112 &amp; Kepolisian</div>
+                  </div>
+                </div>
+
+                <button type="button" class="btn-whatsapp-full" onclick="sendGpsWhatsApp()">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                  <span>Kirim Koordinat GPS via WhatsApp</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Column: Subtabs (Hotline, Buat Laporan, Riwayat Status) -->
+            <div class="sos-right-panel">
+              <div class="sos-subtabs-nav">
+                <button type="button" class="subtab-item active" id="subtab-btn-hotline" onclick="switchSosSubTab('hotline')">Hotline Instansi</button>
+                <button type="button" class="subtab-item" id="subtab-btn-lapor" onclick="switchSosSubTab('lapor')">Buat Laporan</button>
+                <button type="button" class="subtab-item" id="subtab-btn-riwayat" onclick="switchSosSubTab('riwayat')">Riwayat Status</button>
+              </div>
+
+              <!-- VIEW 1: HOTLINE -->
+              <div id="subtab-view-hotline" class="subtab-content-box active">
+                <div class="hotline-sec-head">
+                  <span class="hotline-sec-title">Hotline Instansi Resmi Kediri</span>
+                  <span class="hotline-sec-tag">24 Jam Siaga</span>
+                </div>
+
+                <div class="hotline-item-card">
+                  <div class="hotline-avatar red-bg">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
+                    </svg>
+                  </div>
+                  <div class="hotline-info-box">
+                    <div class="hotline-title">Kediri Siaga 112</div>
+                    <div class="hotline-desc">Panggilan Darurat Bebas Pulsa (112)</div>
+                  </div>
+                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('Kediri Siaga 112', '112')">Panggil</button>
+                </div>
+
+                <div class="hotline-item-card">
+                  <div class="hotline-avatar blue-bg">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                  </div>
+                  <div class="hotline-info-box">
+                    <div class="hotline-title">Polres Kediri Kota</div>
+                    <div class="hotline-desc">SPKT &amp; Laka Lantas: (0354) 684351 / 110</div>
+                  </div>
+                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('Polres Kediri Kota', '0354684351')">Panggil</button>
+                </div>
+
+                <div class="hotline-item-card">
+                  <div class="hotline-avatar orange-bg">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"/>
+                    </svg>
+                  </div>
+                  <div class="hotline-info-box">
+                    <div class="hotline-title">Damkar Kota Kediri</div>
+                    <div class="hotline-desc">Posko PMK &amp; Evakuasi: (0354) 671756 / 113</div>
+                  </div>
+                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('Damkar Kota Kediri', '0354671756')">Panggil</button>
+                </div>
+
+                <!-- Featured Report Status Stepper (Dynamic) -->
+                <div class="featured-stepper-card" id="hotline-report-banner" style="display:none;"></div>
+                <div class="empty-hotline-notice" id="hotline-empty-notice">
+                  <div class="empty-icon-pill">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="8" x2="12" y2="12"/>
+                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="empty-notice-title">Belum Ada Laporan Aktif</span>
+                    <p class="empty-notice-desc">Ingin melaporkan jalan rusak, lampu mati, atau genangan air? Gunakan formulir pada tab <b>"Buat Laporan"</b> di atas.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- VIEW 2: BUAT LAPORAN -->
+              <div id="subtab-view-lapor" class="subtab-content-box">
+                <form class="report-web-form" onsubmit="handleReportSubmit(event)">
+                  <div class="form-group">
+                    <label class="form-label" for="report-cat">Jenis Masalah / Kejadian *</label>
+                    <div class="input-wrap">
+                      <select id="report-cat" class="form-control" required>
+                        <option value="">Pilih Kategori Kejadian</option>
+                        <option value="Kerusakan Jalan">Kerusakan Jalan / Lubang</option>
+                        <option value="Lampu Jalan Mati">Lampu Jalan Mati</option>
+                        <option value="Genangan Air & Banjir">Genangan Air &amp; Banjir</option>
+                        <option value="Pohon Tumbang">Pohon Tumbang / Rawan Roboh</option>
+                        <option value="Kecelakaan Lalu Lintas">Kecelakaan Lalu Lintas</option>
+                        <option value="Darurat Medis">Darurat Medis</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="report-loc">Lokasi Kejadian *</label>
+                    <div class="input-wrap">
+                      <span class="input-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                          <circle cx="12" cy="9" r="2.5"/>
+                        </svg>
+                      </span>
+                      <input type="text" id="report-loc" class="form-control" placeholder="Contoh: Depan Pasar Pahing, Jl. Joyoboyo" required>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="report-txt">Keterangan Tambahan *</label>
+                    <div class="input-wrap textarea-wrap">
+                      <textarea id="report-txt" class="form-control textarea-el" rows="4" placeholder="Ceritakan detail masalah yang terjadi..." required></textarea>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn-green-pill">Kirimkan Laporan</button>
+                </form>
+              </div>
+
+              <!-- VIEW 3: RIWAYAT STATUS -->
+              <div id="subtab-view-riwayat" class="subtab-content-box">
+                <div id="web-reports-stack" class="reports-list-stack">
+                  <!-- Generated via JavaScript -->
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ========================================================
+           TAB 3: PROFIL SAYA (Figma iPhone 17 - 4 Full Web)
+           ======================================================== -->
+      <section id="tab-view-profile" class="tab-page-view">
+        <div class="profile-web-wrapper">
+
+          <div class="profile-web-grid">
+            <!-- Profile Identity Card -->
+            <div class="profile-left-col">
+              <div class="profile-id-card">
+                <div class="avatar-badge-wrap" onclick="openEditProfileModal()" style="cursor: pointer;" title="Klik untuk pasang atau ubah foto profil">
+                  <div class="avatar-round" id="profile-avatar-display">
+                    <svg width="56" height="56" viewBox="0 0 24 24" fill="#9ca3af">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  </div>
+                  <div class="avatar-camera-badge" title="Ubah foto profil">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                  </div>
+                  <div class="verified-dot">✓</div>
+                </div>
+
+                <h3 class="user-display-name">Fajar Kencana</h3>
+                <p class="user-display-email">onlymc75@gmail.com</p>
+
+                <div class="badge-citizen" id="profile-badge-citizen">
+                  <span class="dot-green-sm"></span>
+                  <span id="profile-status-text">Warga Siaga Kediri</span>
+                </div>
+
+                <div class="stats-row-box">
+                  <div class="stat-col">
+                    <div class="stat-val" id="stat-laporan-total">0</div>
+                    <div class="stat-name">Laporan Dibuat</div>
+                  </div>
+                  <div class="stat-col">
+                    <div class="stat-val" id="stat-laporan-selesai">0</div>
+                    <div class="stat-name">Laporan Selesai</div>
+                  </div>
+                  <div class="stat-col">
+                    <div class="stat-val" id="stat-fasilitas-total">12</div>
+                    <div class="stat-name">Fasilitas Aktif</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Profile Menu & Settings -->
+            <div class="profile-right-col">
+              <div class="menu-items-container">
+                <div class="menu-item-card" onclick="openEditProfileModal()" title="Buka form ubah profil">
+                  <div class="menu-icon-round green-fill">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text-wrap">
+                    <div class="menu-head">Edit Profil</div>
+                    <div class="menu-desc" id="profile-edit-subtext">Ubah nama, nomor telepon, dan domisili</div>
+                  </div>
+                  <div class="menu-chevron">&gt;</div>
+                </div>
+
+                <div class="menu-item-card" onclick="openEmergencyContactModal()" title="Kelola & hubungi kontak darurat keluarga">
+                  <div class="menu-icon-round red-fill">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text-wrap">
+                    <div class="menu-head">Kontak Darurat Keluarga</div>
+                    <div class="menu-desc" id="profile-family-contact-desc">Ibu / Rumah (0812-3445-5667)</div>
+                  </div>
+                  <div class="menu-chevron">&gt;</div>
+                </div>
+
+                <div class="menu-item-card" onclick="openNotificationSettingsModal()" title="Buka pengaturan notifikasi & peringatan dini">
+                  <div class="menu-icon-round green-fill">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                      <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text-wrap">
+                    <div class="menu-head">Pengaturan Notifikasi</div>
+                    <div class="menu-desc" id="profile-notif-desc">Peringatan bencana &amp; status laporan (Aktif)</div>
+                  </div>
+                  <div class="web-switch active" id="profile-notif-switch" onclick="event.stopPropagation(); toggleMasterNotification(this)" title="Toggle Notifikasi Cepat"></div>
+                </div>
+
+                <div class="menu-item-card" onclick="openMyReportsHistory()" title="Buka riwayat laporan kejadian Anda">
+                  <div class="menu-icon-round green-fill">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="8" y1="6" x2="21" y2="6"/>
+                      <line x1="8" y1="12" x2="21" y2="12"/>
+                      <line x1="8" y1="18" x2="21" y2="18"/>
+                      <line x1="3" y1="6" x2="3.01" y2="6"/>
+                      <line x1="3" y1="12" x2="3.01" y2="12"/>
+                      <line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text-wrap">
+                    <div class="menu-head">Riwayat Laporan Saya</div>
+                    <div class="menu-desc" id="profile-reports-desc">Pantau progres penanganan laporan Anda</div>
+                  </div>
+                  <div class="menu-chevron">&gt;</div>
+                </div>
+
+                <div class="menu-item-card logout-item" onclick="openLogoutModal()" title="Keluar dari akun">
+                  <div class="menu-icon-round red-fill">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                      <polyline points="16 17 21 12 16 7"/>
+                      <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text-wrap">
+                    <div class="menu-head red-text">Keluar (Log Out)</div>
+                    <div class="menu-desc">Keluar dari sesi akun saat ini</div>
+                  </div>
+                  <div class="menu-chevron red-text">&gt;</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Mobile Responsive Bottom Tab Bar (Only on Small Viewports) -->
+    <nav class="mobile-bottom-tabs">
+      <button type="button" class="mobile-tab active" id="m-tab-map" onclick="switchWebTab('map')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          <line x1="8" y1="2" x2="8" y2="18"/>
+          <line x1="16" y1="6" x2="16" y2="22"/>
+        </svg>
+        <span>Peta</span>
+      </button>
+      <button type="button" class="mobile-tab sos-color" id="m-tab-sos" onclick="switchWebTab('sos')">
+        <div class="rel-box">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span class="badge-red-dot"></span>
+        </div>
+        <span>SOS &amp; Lapor</span>
+      </button>
+      <button type="button" class="mobile-tab" id="m-tab-profile" onclick="switchWebTab('profile')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span>Profil</span>
+      </button>
+    </nav>
+
+  </div>
+
+
+
+
+
+  <!-- ========================================================
+       MODAL: DIREKTORI LENGKAP FASILITAS KOTA KEDIRI (Lihat Semua)
+       ======================================================== -->
+  <div id="modal-all-facilities" class="oauth-modal-overlay">
+    <div class="directory-modal-card">
+      <div class="directory-modal-header">
+        <div class="directory-header-titles">
+          <div class="directory-main-title">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span>Direktori Fasilitas Kota Kediri</span>
+          </div>
+          <span class="directory-sub-title">12+ titik siaga darurat, rumah sakit, apotek, dan shelter dengan navigasi GPS</span>
+        </div>
+        <div class="directory-header-actions">
+          <button type="button" class="btn-fit-map" onclick="fitAllFacilitiesOnMap()" title="Lihat sebaran semua titik di peta">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 3 21 3 21 9"/>
+              <polyline points="9 21 3 21 3 15"/>
+              <line x1="21" y1="3" x2="14" y2="10"/>
+              <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <span>Tampilkan Semua di Peta</span>
+          </button>
+          <button type="button" class="btn-close-modal" onclick="closeAllFacilitiesModal()" aria-label="Tutup">&times;</button>
+        </div>
+      </div>
+
+      <!-- Search & Category Filters -->
+      <div class="directory-toolbar">
+        <div class="directory-search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input type="text" id="directory-search-input" placeholder="Cari nama fasilitas, jalan, atau kategori..." oninput="handleDirectorySearch(this.value)">
+        </div>
+
+        <div class="directory-chips-row">
+          <button type="button" class="dir-chip-btn active" id="dir-chip-all" onclick="filterDirectoryCategory('all', this)">Semua (12)</button>
+          <button type="button" class="dir-chip-btn" id="dir-chip-rs" onclick="filterDirectoryCategory('rs', this)">Rumah Sakit &amp; IGD</button>
+          <button type="button" class="dir-chip-btn" id="dir-chip-apotek" onclick="filterDirectoryCategory('apotek', this)">Apotek 24 Jam</button>
+          <button type="button" class="dir-chip-btn" id="dir-chip-shelter" onclick="filterDirectoryCategory('shelter', this)">Shelter &amp; Evakuasi</button>
+          <button type="button" class="dir-chip-btn" id="dir-chip-keamanan" onclick="filterDirectoryCategory('keamanan', this)">Damkar &amp; Polisi</button>
+        </div>
+      </div>
+
+      <!-- Facilities List Container -->
+      <div class="directory-body-scroll">
+        <div class="directory-grid" id="directory-facilities-grid">
+          <!-- Dynamically populated by renderDirectoryFacilities() -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 1: EDIT PROFIL WARGA
+       ======================================================== -->
+  <div id="modal-edit-profile" class="oauth-modal-overlay" onclick="if(event.target===this) closeEditProfileModal()">
+    <div class="profile-modal-card">
+      <div class="oauth-modal-header">
+        <div class="oauth-title-group">
+          <span class="oauth-modal-title">Edit Profil Pengguna</span>
+          <span class="oauth-modal-sub">Perbarui identitas &amp; data domisili Kota Kediri</span>
+        </div>
+        <button type="button" class="btn-close-modal" onclick="closeEditProfileModal()">✕</button>
+      </div>
+      <form id="form-edit-profile" onsubmit="handleSaveProfile(event)" class="profile-modal-form">
+        <!-- Foto Profil dari Galeri / Simbol -->
+        <div class="form-group">
+          <label class="form-label">Foto Profil Pengguna</label>
+          <div class="photo-upload-container">
+            <div class="avatar-preview-current" id="edit-avatar-preview" onclick="triggerProfilePhotoUpload()" title="Klik untuk pasang foto dari galeri">
+              👤
+            </div>
+            <div class="photo-upload-controls">
+              <input type="file" id="input-profile-photo" accept="image/*" style="display: none;" onchange="handleProfilePhotoUpload(event)">
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn-upload-gallery" onclick="triggerProfilePhotoUpload()" title="Unggah foto dari perangkat atau galeri">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                  <span>Pilih Foto dari Galeri</span>
+                </button>
+                <button type="button" class="btn-remove-photo" id="btn-remove-photo" style="display: none;" onclick="removeProfilePhoto()" title="Kembali ke avatar simbol">
+                  <span>✕ Hapus Foto</span>
+                </button>
+              </div>
+              <span class="upload-hint">Format JPG, PNG, atau WEBP. Dipotong bulat otomatis.</span>
+            </div>
+          </div>
+
+          <!-- Pilihan Simbol Siaga Alternatif -->
+          <div style="margin-top: 10px;">
+            <span class="avatar-alt-label">Atau gunakan avatar simbol siaga:</span>
+            <div class="avatar-options-row" style="margin-top: 6px;">
+              <button type="button" class="avatar-opt-btn active" data-avatar="👤" onclick="selectProfileAvatar('👤', this)" title="Warga Standard">👤</button>
+              <button type="button" class="avatar-opt-btn" data-avatar="👨‍💼" onclick="selectProfileAvatar('👨‍💼', this)" title="Warga Laki-laki">👨‍💼</button>
+              <button type="button" class="avatar-opt-btn" data-avatar="👩‍💼" onclick="selectProfileAvatar('👩‍💼', this)" title="Warga Perempuan">👩‍💼</button>
+              <button type="button" class="avatar-opt-btn" data-avatar="⛑️" onclick="selectProfileAvatar('⛑️', this)" title="Relawan Siaga">⛑️</button>
+              <button type="button" class="avatar-opt-btn" data-avatar="👮" onclick="selectProfileAvatar('👮', this)" title="Petugas Siaga">👮</button>
+              <button type="button" class="avatar-opt-btn" data-avatar="🧑‍🚒" onclick="selectProfileAvatar('🧑‍🚒', this)" title="Damkar & Penyelamat">🧑‍🚒</button>
+            </div>
+            <input type="hidden" id="edit-profile-avatar" value="👤">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-profile-name">Nama Lengkap *</label>
+          <input type="text" id="edit-profile-name" class="form-control" placeholder="Nama Anda" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-profile-phone">Nomor Telepon / WhatsApp *</label>
+          <input type="tel" id="edit-profile-phone" class="form-control" placeholder="08xxxxxxxxxx" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-profile-address">Domisili / Wilayah di Kediri *</label>
+          <input type="text" id="edit-profile-address" class="form-control" placeholder="Kecamatan Pesantren / Kota / Mojoroto" required>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="edit-profile-blood">Golongan Darah</label>
+            <select id="edit-profile-blood" class="form-control">
+              <option value="O+">O+</option>
+              <option value="A+">A+</option>
+              <option value="B+">B+</option>
+              <option value="AB+">AB+</option>
+              <option value="O-">O-</option>
+              <option value="A-">A-</option>
+              <option value="B-">B-</option>
+              <option value="AB-">AB-</option>
+              <option value="Belum Tahu">Belum Tahu</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit-profile-status">Status Relawan</label>
+            <select id="edit-profile-status" class="form-control">
+              <option value="Warga Siaga Kediri">Warga Siaga Kediri</option>
+              <option value="Relawan Tanggap Bencana">Relawan Tanggap Bencana</option>
+              <option value="Petugas Siaga 112">Petugas Siaga 112</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-form-actions">
+          <button type="button" class="btn-modal-cancel" onclick="closeEditProfileModal()">Batal</button>
+          <button type="submit" class="btn-modal-save">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 2: KONTAK DARURAT KELUARGA
+       ======================================================== -->
+  <div id="modal-emergency-contact" class="oauth-modal-overlay" onclick="if(event.target===this) closeEmergencyContactModal()">
+    <div class="profile-modal-card">
+      <div class="oauth-modal-header">
+        <div class="oauth-title-group">
+          <span class="oauth-modal-title">Kontak Darurat Keluarga</span>
+          <span class="oauth-modal-sub">Dihubungi saat genting atau butuh bantuan mendesak</span>
+        </div>
+        <button type="button" class="btn-close-modal" onclick="closeEmergencyContactModal()">✕</button>
+      </div>
+      <form id="form-emergency-contact" onsubmit="handleSaveEmergencyContact(event)" class="profile-modal-form">
+        <!-- Preview Quick Action Card -->
+        <div class="emergency-contact-preview-box">
+          <div class="ec-preview-left">
+            <div class="ec-icon-ring">❤️</div>
+            <div>
+              <div class="ec-name-display" id="ec-preview-name">Ibu / Rumah</div>
+              <div class="ec-phone-display" id="ec-preview-phone">0812-3445-5667</div>
+            </div>
+          </div>
+          <div class="ec-actions-row">
+            <button type="button" class="btn-ec-call" onclick="callEmergencyFamilyContact()" title="Panggil Darurat">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+              <span>Telepon</span>
+            </button>
+            <button type="button" class="btn-ec-wa" onclick="sendEmergencyFamilyWhatsApp()" title="Kirim Lokasi via WhatsApp">
+              <span>Kirim WA</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="ec-name">Nama Kontak *</label>
+          <input type="text" id="ec-name" class="form-control" placeholder="Misal: Ibu, Ayah, Istri, Kakak" required>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="ec-relation">Hubungan</label>
+            <select id="ec-relation" class="form-control">
+              <option value="Orang Tua (Ibu/Ayah)">Orang Tua (Ibu/Ayah)</option>
+              <option value="Pasangan (Suami/Istri)">Pasangan (Suami/Istri)</option>
+              <option value="Anak">Anak</option>
+              <option value="Saudara Kandung">Saudara Kandung</option>
+              <option value="Kerabat / Tetangga">Kerabat / Tetangga</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ec-phone">Nomor HP / WhatsApp *</label>
+            <input type="tel" id="ec-phone" class="form-control" placeholder="08xxxxxxxxxx" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ec-default-msg">Pesan Siaga WhatsApp Default</label>
+          <textarea id="ec-default-msg" class="form-control" rows="2">Halo, saya butuh bantuan darurat di lokasi saya. Mohon pantau koordinat saya!</textarea>
+        </div>
+        <div class="modal-form-actions">
+          <button type="button" class="btn-modal-cancel" onclick="closeEmergencyContactModal()">Tutup</button>
+          <button type="submit" class="btn-modal-save">Simpan Kontak</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 3: PENGATURAN NOTIFIKASI
+       ======================================================== -->
+  <div id="modal-notification-settings" class="oauth-modal-overlay" onclick="if(event.target===this) closeNotificationSettingsModal()">
+    <div class="profile-modal-card">
+      <div class="oauth-modal-header">
+        <div class="oauth-title-group">
+          <span class="oauth-modal-title">Pengaturan Notifikasi Siaga</span>
+          <span class="oauth-modal-sub">Peringatan dini bencana dan status laporan Anda</span>
+        </div>
+        <button type="button" class="btn-close-modal" onclick="closeNotificationSettingsModal()">✕</button>
+      </div>
+      <div class="notif-settings-list">
+        <div class="notif-setting-item">
+          <div class="notif-item-text">
+            <div class="notif-item-title">Peringatan Bencana &amp; Cuaca Ekstrem</div>
+            <div class="notif-item-desc">Sinyal dini gempa bumi, banjir luapan Sungai Brantas, dan angin ribut</div>
+          </div>
+          <div class="web-switch active" id="switch-notif-disaster" onclick="toggleWebSwitch(this)"></div>
+        </div>
+        <div class="notif-setting-item">
+          <div class="notif-item-text">
+            <div class="notif-item-title">Update Progres Laporan Warga</div>
+            <div class="notif-item-desc">Pemberitahuan saat laporan Anda diterima, diproses, atau selesai oleh BPBD/Damkar</div>
+          </div>
+          <div class="web-switch active" id="switch-notif-reports" onclick="toggleWebSwitch(this)"></div>
+        </div>
+        <div class="notif-setting-item">
+          <div class="notif-item-text">
+            <div class="notif-item-title">Bunyi Sirine / Audio Darurat</div>
+            <div class="notif-item-desc">Audio sirine keras saat ada ancaman darurat di dekat wilayah Anda</div>
+          </div>
+          <div class="web-switch active" id="switch-notif-sound" onclick="toggleWebSwitch(this)"></div>
+        </div>
+        <div class="notif-setting-item">
+          <div class="notif-item-text">
+            <div class="notif-item-title">Radius Pantauan Bahaya</div>
+            <div class="notif-item-desc">Jangkauan deteksi bahaya dari posisi GPS terkini Anda</div>
+          </div>
+          <select id="select-notif-radius" class="notif-radius-select">
+            <option value="2">2 km terdekat</option>
+            <option value="5" selected>5 km terdekat</option>
+            <option value="10">10 km terdekat</option>
+            <option value="all">Seluruh Kota Kediri</option>
+          </select>
+        </div>
+
+        <!-- Integrasi API Key Pemerintah (BPBD & BMKG) -->
+        <div class="notif-gov-card-section">
+          <div class="gov-card-header">
+            <div class="gov-card-badge">
+              <span class="gov-live-dot"></span>
+              <span>API RESMI PEMERINTAH</span>
+            </div>
+            <span class="gov-card-title">Koneksi API BPBD &amp; BMKG</span>
+          </div>
+          <p class="gov-card-desc">Sistem otomatis mengambil data peringatan gempa &amp; cuaca real-time langsung dari satelit/seismograf BMKG RI dan sistem aduan BPBD Kota Kediri.</p>
+          
+          <div class="gov-input-group">
+            <label for="input-bpbd-key" class="gov-input-label">API Key BPBD Kota Kediri / BNPB:</label>
+            <input type="text" id="input-bpbd-key" class="form-control gov-input-field" placeholder="Masukkan API Key (misal: BPBD-KEDIRI-LIVE-...)">
+          </div>
+
+          <div class="gov-input-group" style="margin-top: 10px;">
+            <label for="input-bpbd-endpoint" class="gov-input-label">Custom Endpoint BPBD / BNPB (Opsional):</label>
+            <input type="text" id="input-bpbd-endpoint" class="form-control gov-input-field" placeholder="https://api.bpbd.kedirikota.go.id/v1/alerts">
+          </div>
+
+          <div class="gov-action-row" style="margin-top: 12px;">
+            <button type="button" class="btn-gov-sync" onclick="syncGovernmentAlertsNow(true)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              <span>Tes &amp; Ambil Data Pemerintah Sekarang</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-form-actions">
+        <button type="button" class="btn-modal-cancel" onclick="closeNotificationSettingsModal()">Tutup</button>
+        <button type="button" class="btn-modal-save" onclick="saveNotificationSettings()">Simpan Pengaturan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 4: RIWAYAT LAPORAN SAYA
+       ======================================================== -->
+  <div id="modal-my-reports" class="oauth-modal-overlay" onclick="if(event.target===this) closeMyReportsModal()">
+    <div class="profile-modal-card modal-wide">
+      <div class="oauth-modal-header">
+        <div class="oauth-title-group">
+          <span class="oauth-modal-title">Riwayat Laporan Saya</span>
+          <span class="oauth-modal-sub">Pantau tindak lanjut laporan &amp; aduan Anda secara real-time</span>
+        </div>
+        <button type="button" class="btn-close-modal" onclick="closeMyReportsModal()">✕</button>
+      </div>
+
+      <!-- Stats Summary Strip -->
+      <div class="reports-summary-strip">
+        <div class="rep-stat-item">
+          <span class="rep-stat-num" id="modal-rep-total">0</span>
+          <span class="rep-stat-lbl">Total Aduan</span>
+        </div>
+        <div class="rep-stat-item orange">
+          <span class="rep-stat-num" id="modal-rep-proses">0</span>
+          <span class="rep-stat-lbl">Diproses</span>
+        </div>
+        <div class="rep-stat-item green">
+          <span class="rep-stat-num" id="modal-rep-selesai">0</span>
+          <span class="rep-stat-lbl">Selesai</span>
+        </div>
+      </div>
+
+      <!-- Filter Chips -->
+      <div class="reports-modal-filter">
+        <button type="button" class="notif-chip active" id="chip-rep-all" onclick="filterModalReports('all', this)">Semua (<span id="count-rep-all">0</span>)</button>
+        <button type="button" class="notif-chip" id="chip-rep-proses" onclick="filterModalReports('proses', this)">Diproses (<span id="count-rep-proses">0</span>)</button>
+        <button type="button" class="notif-chip" id="chip-rep-selesai" onclick="filterModalReports('selesai', this)">Selesai (<span id="count-rep-selesai">0</span>)</button>
+      </div>
+
+      <!-- Reports List Body -->
+      <div class="reports-modal-body" id="modal-reports-list">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div class="modal-form-actions" style="padding: 12px 24px; background: var(--body-bg, #f8fafc); margin: 0;">
+        <button type="button" class="btn-modal-cancel" onclick="closeMyReportsModal()">Tutup</button>
+        <button type="button" class="btn-modal-save" onclick="closeMyReportsModal(); switchWebTab('sos'); switchSosSubTab('lapor');">
+          + Buat Laporan Baru
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 5: KONFIRMASI LOGOUT
+       ======================================================== -->
+  <div id="modal-logout-confirm" class="oauth-modal-overlay" onclick="if(event.target===this) closeLogoutModal()">
+    <div class="profile-modal-card" style="max-width: 400px;">
+      <div class="logout-dialog-body">
+        <div class="logout-icon-ring">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </div>
+        <h3 class="logout-dialog-title">Keluar dari Akun?</h3>
+        <p class="logout-dialog-desc">Apakah Anda yakin ingin keluar dari Kediri Safe Map? Anda perlu masuk kembali untuk membuat laporan warga dan mengakses navigasi.</p>
+        <div style="display:flex;gap:10px;width:100%;margin-top:8px;">
+          <button type="button" class="btn-modal-cancel" style="flex:1;" onclick="closeLogoutModal()">Batal</button>
+          <button type="button" class="btn-modal-logout-confirm" style="flex:1;" onclick="confirmLogout()">Ya, Keluar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Google Identity Services SDK Script (Official Google Library) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Leaflet Maps Script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Application JS -->
+  <script src="assets/js/app.js?v=2"></script>
+</body>
+</html>

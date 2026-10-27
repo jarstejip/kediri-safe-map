@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 420" width="100%" height="100%">
+  <defs>
+    <!-- Clip path for shield split colors -->
+    <clipPath id="shield-clip">
+      <path d="M 180 120 C 235 120 268 135 272 155 C 275 220 235 275 180 305 C 125 275 85 220 88 155 C 92 135 125 120 180 120 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- SHIELD BACKGROUND (Split Left Lime / Right Gold) -->
+  <g clip-path="url(#shield-clip)">
+    <!-- Left Lime Green -->
+    <rect x="0" y="0" width="180" height="340" fill="#8dc63f"/>
+    <!-- Right Warm Gold -->
+    <rect x="180" y="0" width="180" height="340" fill="#e5b83b"/>
+  </g>
+
+  <!-- SIMPANG LIMA GUMUL (SLG) MONUMENT -->
+  <g id="monument-slg">
+    <!-- Main Arch Body -->
+    <path d="M 140 215 L 220 215 L 220 292 L 205 292 L 205 250 C 205 237 195 234 180 234 C 165 234 155 237 155 250 L 155 292 L 140 292 Z" fill="#ffffff" stroke="#b37f1b" stroke-width="4.5" stroke-linejoin="round"/>
+    <!-- Center Portal Inner Arch Line -->
+    <path d="M 163 292 L 163 254 C 163 243 170 241 180 241 C 190 241 197 243 197 254 L 197 292" fill="#ffffff" stroke="#b37f1b" stroke-width="3.5" stroke-linejoin="round"/>
+    <!-- Top Cornice / Attic -->
+    <rect x="134" y="200" width="92" height="15" rx="2" fill="#ffffff" stroke="#b37f1b" stroke-width="4" stroke-linejoin="round"/>
+    <!-- Dentils / Battlements -->
+    <path d="M 142 201 L 142 208 M 154 201 L 154 208 M 167 201 L 167 208 M 180 201 L 180 208 M 193 201 L 193 208 M 206 201 L 206 208 M 218 201 L 218 208" stroke="#b37f1b" stroke-width="3" stroke-linecap="round"/>
+    <!-- Horizontal Relief Band -->
+    <line x1="140" y1="225" x2="220" y2="225" stroke="#b37f1b" stroke-width="3"/>
+  </g>
+
+  <!-- SHIELD BORDER -->
+  <path d="M 180 120 C 235 120 268 135 272 155 C 275 220 235 275 180 305 C 125 275 85 220 88 155 C 92 135 125 120 180 120 Z" fill="none" stroke="#135964" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- LOCATION PIN (OVER SHIELD) -->
+  <g id="location-pin">
+    <!-- Pin Outline & Fill -->
+    <path d="M 180 178 C 160 148 144 128 144 102 C 144 68 160 48 180 48 C 200 48 216 68 216 102 C 216 128 200 148 180 178 Z" fill="#8dc63f" stroke="#135964" stroke-width="11" stroke-linejoin="round"/>
+    <!-- Darker Teal / Green Segments Inside Pin -->
+    <path d="M 180 49 C 162 49 146 66 146 100 C 146 114 154 132 166 150 L 180 128 Z" fill="#1b7a67"/>
+    <path d="M 180 174 L 168 152 L 180 134 L 192 152 Z" fill="#1b7a67"/>
+    <!-- Pin Center White Circle -->
+    <circle cx="180" cy="98" r="15" fill="#ffffff" stroke="#135964" stroke-width="4.5"/>
+  </g>
+
+  <!-- TYPOGRAPHY: KEDIRI SAFE MAP -->
+  <text x="180" y="356" text-anchor="middle" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" font-size="44" font-weight="900" fill="#135964" letter-spacing="2">KEDIRI</text>
+  <text x="180" y="398" text-anchor="middle" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" font-size="31" font-weight="800" fill="#2ea064" letter-spacing="3.5">SAFE MAP</text>
+</svg>
