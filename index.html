@@ -7,7 +7,7 @@
   <meta name="description" content="Kediri Safe Map: Sistem Informasi & Peta Tanggap Darurat Kota Kediri.">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261027_14">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261027_15">
 </head>
 <body>
 
@@ -565,6 +565,15 @@
       <section id="tab-view-sos" class="tab-page-view">
         <div class="page-max-container">
 
+          <!-- Tombol Navigasi Cepat Kembali ke Peta -->
+          <div class="tab-nav-back-pill" onclick="switchWebTab('map')" title="Kembali ke Peta Interaktif">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Kembali ke Peta</span>
+          </div>
+
           <!-- Section Banner -->
           <div class="sos-web-header">
             <div class="sos-icon-box">
@@ -739,6 +748,15 @@
            ======================================================== -->
       <section id="tab-view-profile" class="tab-page-view">
         <div class="profile-web-wrapper">
+
+          <!-- Tombol Navigasi Cepat Kembali ke Peta -->
+          <div class="tab-nav-back-pill" onclick="switchWebTab('map')" title="Kembali ke Peta Interaktif">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Kembali ke Peta</span>
+          </div>
 
           <div class="profile-web-grid">
             <!-- Profile Identity Card -->
