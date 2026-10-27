@@ -4486,6 +4486,9 @@ svg {
     z-index: 500 !important;
     border: 1px solid rgba(226, 232, 240, 0.9) !important;
     box-sizing: border-box !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
   
@@ -4572,10 +4575,14 @@ svg {
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
+    overflow-y: hidden !important;
     scroll-snap-type: x mandatory !important;
     -webkit-overflow-scrolling: touch !important;
-    gap: 8px !important;
-    padding: 2px 0 2px 0 !important;
+    gap: 10px !important;
+    padding: 2px 2px 6px 2px !important;
+    min-height: 135px !important;
+    height: auto !important;
+    align-items: stretch !important;
     scrollbar-width: none !important;
     box-sizing: border-box !important;
   }
@@ -4584,17 +4591,21 @@ svg {
   }
   
   .facility-web-card {
-    flex: 0 0 215px !important;
-    min-width: 215px !important;
-    max-width: 220px !important;
+    flex: 0 0 220px !important;
+    min-width: 220px !important;
+    max-width: 230px !important;
     scroll-snap-align: start !important;
-    padding: 8px 10px !important;
-    border-radius: 12px !important;
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
     display: flex !important;
     flex-direction: column !important;
+    justify-content: space-between !important;
+    height: auto !important;
+    min-height: 125px !important;
+    overflow: visible !important;
     box-sizing: border-box !important;
     transition: transform 0.15s ease !important;
   }
@@ -4604,7 +4615,7 @@ svg {
   }
   
   .badge-cat-cyan {
-    font-size: 8px !important;
+    font-size: 8.5px !important;
     font-weight: 800 !important;
     margin-bottom: 2px !important;
     letter-spacing: 0.3px !important;
@@ -4612,7 +4623,7 @@ svg {
   }
   
   .facility-heading {
-    font-size: 12px !important;
+    font-size: 12.5px !important;
     font-weight: 700 !important;
     color: #0f172a !important;
     margin-bottom: 2px !important;
@@ -4636,13 +4647,15 @@ svg {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    margin-top: 4px !important;
-    padding-top: 4px !important;
-    border-top: 1px dashed #f1f5f9 !important;
+    margin-top: 6px !important;
+    padding-top: 6px !important;
+    border-top: 1px dashed #cbd5e1 !important;
+    width: 100% !important;
+    flex-shrink: 0 !important;
   }
   
   .facility-open-tag {
-    font-size: 9px !important;
+    font-size: 9.5px !important;
     font-weight: 700 !important;
     color: #16a34a !important;
   }
@@ -4650,8 +4663,8 @@ svg {
   .btn-card-start-nav {
     display: inline-flex !important;
     align-items: center !important;
-    gap: 3px !important;
-    padding: 3px 10px !important;
+    gap: 4px !important;
+    padding: 4px 12px !important;
     font-size: 11px !important;
     font-weight: 700 !important;
     background: #15803d !important;
