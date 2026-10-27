@@ -4368,9 +4368,15 @@ svg {
 
   /* 3. View Containers */
   .tab-page-view {
+    display: none !important;
     width: 100% !important;
     height: 100% !important;
     box-sizing: border-box !important;
+  }
+
+  .tab-page-view.active {
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   /* 4. Map Tab View */
@@ -4840,10 +4846,13 @@ svg {
     height: 100% !important;
     scrollbar-width: thin !important;
     scrollbar-color: rgba(148, 163, 184, 0.3) transparent !important;
+    width: 100% !important;
+  }
+
+  #tab-view-profile.active {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    width: 100% !important;
   }
 
   #tab-view-profile::-webkit-scrollbar {
