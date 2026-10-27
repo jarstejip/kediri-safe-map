@@ -2016,6 +2016,15 @@ function initWebMap() {
   }
 
   renderWebFacilities('all');
+  renderDrawerFacilityCards();
+
+  // Auto-update fasilitas terdekat saat peta digeser ke lokasi tertentu
+  webState.map.on('moveend', () => {
+    const center = webState.map.getCenter();
+    if (center) {
+      updateFacilitiesWithLiveLocation(center.lat, center.lng);
+    }
+  });
 }
 
 function renderWebFacilities(filter) {
@@ -3673,6 +3682,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadStoredProfileData();
   renderWebReportsStack();
   updateNotificationBadge();
+  renderDrawerFacilityCards();
   if (navigator.geolocation) {
     startRealtimeGeolocation();
   }

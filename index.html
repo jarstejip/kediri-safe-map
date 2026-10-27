@@ -7,7 +7,7 @@
   <meta name="description" content="Kediri Safe Map: Sistem Informasi & Peta Tanggap Darurat Kota Kediri.">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="assets/css/style.css?v=2">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261027_06">
 </head>
 <body>
 
@@ -539,63 +539,17 @@
         </div>
 
         <!-- Bottom Facility Drawer (Figma Cards) -->
+        <!-- Bottom Facility Drawer (Figma Cards) -->
         <div class="facilities-drawer" id="main-facilities-drawer">
           <div class="drawer-header">
             <div class="drawer-title-group">
-              <span class="drawer-title">Fasilitas Terdekat di Kediri</span>
-              <span class="drawer-sub">Menampilkan data siaga dan rute real-time</span>
+              <span class="drawer-title">Fasilitas Terdekat di Sekitar Anda</span>
+              <span class="drawer-sub">Mendeteksi lokasi &amp; fasilitas darurat terdekat...</span>
             </div>
             <button type="button" class="drawer-link-btn" onclick="openAllFacilitiesModal()" title="Buka direktori lengkap fasilitas Kota Kediri">Lihat Semua</button>
           </div>
-          <div class="cards-grid-row">
-            <div class="facility-web-card" onclick="focusFacilityOnMap(1)" title="Klik untuk melihat di peta">
-              <span class="badge-cat-cyan">RUMAH SAKIT &amp; IGD</span>
-              <h3 class="facility-heading">RSUD Gambiran Kediri</h3>
-              <p class="facility-distance">• 1.2 km dari Anda</p>
-              <div class="card-bottom-actions">
-                <span class="facility-open-tag">Buka 24 Jam</span>
-                <button type="button" class="btn-card-start-nav" onclick="event.stopPropagation(); startNavigationToFacility(1)" title="Mulai Navigasi">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  <span>Mulai</span>
-                </button>
-              </div>
-            </div>
-            <div class="facility-web-card" onclick="focusFacilityOnMap(5)" title="Klik untuk melihat di peta">
-              <span class="badge-cat-cyan">APOTEK SIAGA</span>
-              <h3 class="facility-heading">Kimia Farma Dhoho</h3>
-              <p class="facility-distance">• 350 m dari Anda</p>
-              <div class="card-bottom-actions">
-                <span class="facility-open-tag">Buka Siaga</span>
-                <button type="button" class="btn-card-start-nav" onclick="event.stopPropagation(); startNavigationToFacility(5)" title="Mulai Navigasi">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  <span>Mulai</span>
-                </button>
-              </div>
-            </div>
-            <div class="facility-web-card" onclick="focusFacilityOnMap(2)" title="Klik untuk melihat di peta">
-              <span class="badge-cat-cyan">RUMAH SAKIT &amp; IGD</span>
-              <h3 class="facility-heading">RS Bhayangkara</h3>
-              <p class="facility-distance">• 2.1 km dari Anda</p>
-              <div class="card-bottom-actions">
-                <span class="facility-open-tag">Buka 24 Jam</span>
-                <button type="button" class="btn-card-start-nav" onclick="event.stopPropagation(); startNavigationToFacility(2)" title="Mulai Navigasi">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  <span>Mulai</span>
-                </button>
-              </div>
-            </div>
-            <div class="facility-web-card" onclick="focusFacilityOnMap(8)" title="Klik untuk melihat di peta">
-              <span class="badge-cat-cyan">TEMPAT IBADAH &amp; EVAKUASI</span>
-              <h3 class="facility-heading">Masjid Agung Kediri</h3>
-              <p class="facility-distance">• 850 m dari Anda</p>
-              <div class="card-bottom-actions">
-                <span class="facility-open-tag">Buka Setiap Waktu</span>
-                <button type="button" class="btn-card-start-nav" onclick="event.stopPropagation(); startNavigationToFacility(8)" title="Mulai Navigasi">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  <span>Mulai</span>
-                </button>
-              </div>
-            </div>
+          <div class="cards-grid-row" id="drawer-cards-grid-row">
+            <!-- Dinamis dirender otomatis dari fasilitas terdekat dengan lokasi pengguna -->
           </div>
         </div>
       </section>
@@ -1327,6 +1281,6 @@
   <!-- Leaflet Maps Script -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Application JS -->
-  <script src="assets/js/app.js?v=2"></script>
+  <script src="assets/js/app.js?v=20261027_06"></script>
 </body>
 </html>
