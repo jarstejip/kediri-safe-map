@@ -3,7 +3,8 @@
   "rewrites": [
     { "source": "/api/alerts.php", "destination": "/api/alerts" },
     { "source": "/api/reports.php", "destination": "/api/reports" },
-    { "source": "/api/register.php", "destination": "/api/register" }
+    { "source": "/api/register.php", "destination": "/api/register" },
+    { "source": "/api/login.php", "destination": "/api/login" }
   ],
   "headers": [
     {

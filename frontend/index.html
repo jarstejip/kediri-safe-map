@@ -3,11 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Kediri Safe Map - Peta Aman Kota Kediri</title>
   <meta name="description" content="Kediri Safe Map: Sistem Informasi & Peta Tanggap Darurat Kota Kediri.">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261027_15">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261028_02">
 </head>
 <body>
 
@@ -43,7 +46,7 @@
         <!-- FORM 1: SIGN IN -->
         <form id="form-signin" onsubmit="handleSignIn(event)">
           <div class="form-group">
-            <label class="form-label" for="signin-email">Email Addres *</label>
+            <label class="form-label" for="signin-email">Email Address *</label>
             <div class="input-wrap">
               <span class="input-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -51,7 +54,7 @@
                   <path d="M22 6L12 13 2 6"/>
                 </svg>
               </span>
-              <input type="email" id="signin-email" class="form-control" placeholder="Enter Your Email Addres" value="onlymc75@gmail.com" required>
+              <input type="email" id="signin-email" class="form-control" placeholder="Enter Your Email Address" required autocomplete="email">
             </div>
           </div>
 
@@ -64,7 +67,7 @@
                   <path d="M7 11V7a5 5 0 0110 0v4"/>
                 </svg>
               </span>
-              <input type="password" id="signin-pass" class="form-control" placeholder="Enter Your Password" value="••••••••" required>
+              <input type="password" id="signin-pass" class="form-control" placeholder="Enter Your Password" required autocomplete="current-password">
               <button type="button" class="toggle-eye-btn" onclick="togglePasswordVisibility('signin-pass', this)" aria-label="Toggle password">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -74,7 +77,10 @@
             </div>
           </div>
 
-          <button type="submit" class="btn-green-pill">Sign In</button>
+          <!-- Alert box for errors like account not found -->
+          <div id="signin-error-box" class="auth-alert danger" style="display:none;"></div>
+
+          <button type="submit" class="btn-green-pill" id="btn-submit-signin">Sign In</button>
         </form>
 
         <!-- FORM 2: SIGN UP -->
@@ -88,12 +94,12 @@
                   <circle cx="12" cy="7" r="4"/>
                 </svg>
               </span>
-              <input type="text" id="signup-name" class="form-control" placeholder="Enter Your Full Name" required>
+              <input type="text" id="signup-name" class="form-control" placeholder="Enter Your Full Name" required autocomplete="name">
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="signup-email">Email Addres *</label>
+            <label class="form-label" for="signup-email">Email Address *</label>
             <div class="input-wrap">
               <span class="input-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -101,7 +107,7 @@
                   <path d="M22 6L12 13 2 6"/>
                 </svg>
               </span>
-              <input type="email" id="signup-email" class="form-control" placeholder="Enter Your Email Addres" required>
+              <input type="email" id="signup-email" class="form-control" placeholder="Enter Your Email Address" required autocomplete="email">
             </div>
           </div>
 
@@ -224,7 +230,10 @@
             </div>
           </div>
 
-          <button type="submit" class="btn-green-pill">Sign Up &amp; Aktivasi Akun</button>
+          <!-- Alert box for sign up errors -->
+          <div id="signup-error-box" class="auth-alert danger" style="display:none;"></div>
+
+          <button type="submit" class="btn-green-pill" id="btn-submit-signup">Sign Up &amp; Aktivasi Akun</button>
         </form>
 
         <!-- Divider -->
@@ -781,8 +790,8 @@
                   </div>
                 </div>
 
-                <h3 class="user-display-name">Fajar Kencana</h3>
-                <p class="user-display-email">onlymc75@gmail.com</p>
+                <h3 class="user-display-name">Warga Kediri</h3>
+                <p class="user-display-email">warga@kedirisafe.id</p>
 
                 <div class="badge-citizen" id="profile-badge-citizen">
                   <span class="dot-green-sm"></span>
@@ -1324,6 +1333,6 @@
   <!-- Leaflet Maps Script -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Application JS -->
-  <script src="assets/js/app.js?v=20261027_11"></script>
+  <script src="assets/js/app.js?v=20261028_02"></script>
 </body>
 </html>

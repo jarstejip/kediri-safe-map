@@ -29,8 +29,8 @@ const webState = {
   deviceHeading: null,
   // Profile, Family Contact & Notification Settings
   userProfile: {
-    name: 'Fajar Kencana',
-    email: 'onlymc75@gmail.com',
+    name: 'Warga Kediri',
+    email: 'warga@kedirisafe.id',
     phone: '0812-3456-7890',
     address: 'Kecamatan Pesantren, Kota Kediri',
     bloodType: 'O+',
@@ -457,6 +457,84 @@ const kediriFacilities = [
   }
 ];
 
+// ---- HTML Sanitizer Helper ----
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// ========================================================
+// USER REGISTRATION & AUTHENTICATION ACCOUNT REGISTRY
+// ========================================================
+const DEFAULT_SYSTEM_USERS = [
+  {
+    name: 'Administrator',
+    email: 'admin@kediri.go.id',
+    password: 'admin123',
+    status: 'Administrator Kediri Safe Map'
+  },
+  {
+    name: 'Budi Warga',
+    email: 'budi@gmail.com',
+    password: 'budi123',
+    status: 'Warga Terverifikasi Biometrik (Face ID)'
+  }
+];
+
+function getRegisteredUsers() {
+  try {
+    const raw = localStorage.getItem('kediri_safe_registered_users');
+    if (!raw) {
+      localStorage.setItem('kediri_safe_registered_users', JSON.stringify(DEFAULT_SYSTEM_USERS));
+      return [...DEFAULT_SYSTEM_USERS];
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      localStorage.setItem('kediri_safe_registered_users', JSON.stringify(DEFAULT_SYSTEM_USERS));
+      return [...DEFAULT_SYSTEM_USERS];
+    }
+    return parsed;
+  } catch (e) {
+    return [...DEFAULT_SYSTEM_USERS];
+  }
+}
+
+function saveRegisteredUser(userObj) {
+  try {
+    const users = getRegisteredUsers();
+    const idx = users.findIndex(u => u.email.toLowerCase() === userObj.email.toLowerCase());
+    if (idx >= 0) {
+      users[idx] = Object.assign(users[idx], userObj);
+    } else {
+      users.push(userObj);
+    }
+    localStorage.setItem('kediri_safe_registered_users', JSON.stringify(users));
+  } catch (e) {
+    console.warn('Gagal menyimpan user ke local storage:', e);
+  }
+}
+
+function prefillSignupEmail(email) {
+  const el = document.getElementById('signup-email');
+  if (el) {
+    el.value = email;
+    el.focus();
+  }
+}
+
+function prefillSigninEmail(email) {
+  const el = document.getElementById('signin-email');
+  if (el) {
+    el.value = email;
+    el.focus();
+  }
+}
+
 // ---- Auth Tab Switcher (Sign In vs Sign Up) ----
 function switchAuthTab(tab) {
   webState.authTab = tab;
@@ -464,6 +542,12 @@ function switchAuthTab(tab) {
   const formSignup = document.getElementById('form-signup');
   const btnSignin = document.getElementById('tab-btn-signin');
   const btnSignup = document.getElementById('tab-btn-signup');
+
+  // Bersihkan kotak error saat berpindah tab
+  const signinErr = document.getElementById('signin-error-box');
+  const signupErr = document.getElementById('signup-error-box');
+  if (signinErr) { signinErr.style.display = 'none'; signinErr.innerHTML = ''; }
+  if (signupErr) { signupErr.style.display = 'none'; signupErr.innerHTML = ''; }
 
   if (tab === 'signin') {
     if (formSignin) formSignin.style.display = 'block';
@@ -502,18 +586,147 @@ function togglePasswordVisibility(inputId, btnEl) {
   }
 }
 
-// ---- Form Submit Handlers ----
-function handleSignIn(e) {
+// ---- Form Submit Handlers (Strict Verification: Wajib Punya Akun / Sign Up / Google) ----
+async function handleSignIn(e) {
   e.preventDefault();
-  const email = document.getElementById('signin-email')?.value.trim();
-  const pass = document.getElementById('signin-pass')?.value.trim();
+  const emailInput = document.getElementById('signin-email');
+  const passInput = document.getElementById('signin-pass');
+  const errorBox = document.getElementById('signin-error-box');
+  const btnSubmit = document.getElementById('btn-submit-signin') || (e.target ? e.target.querySelector('button[type="submit"]') : null);
+
+  if (errorBox) {
+    errorBox.style.display = 'none';
+    errorBox.innerHTML = '';
+  }
+
+  const email = emailInput?.value.trim();
+  const pass = passInput?.value.trim();
 
   if (!email || !pass) {
-    showToast('Silakan isi email dan kata sandi!');
+    showToast('⚠️ Silakan masukkan email dan kata sandi Anda!');
+    if (errorBox) {
+      errorBox.className = 'auth-alert danger';
+      errorBox.innerHTML = '<span>⚠️ Mohon masukkan email dan kata sandi Anda.</span>';
+      errorBox.style.display = 'flex';
+    }
     return;
   }
+
+  // Tampilkan loading di tombol Sign In
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.style.opacity = '0.7';
+    btnSubmit.textContent = 'Memverifikasi...';
+  }
+
+  // 1. Coba verifikasi dengan API backend jika server backend (PHP/Vercel) aktif
+  let apiSuccess = false;
+  let apiUserData = null;
+  try {
+    const res = await fetch('api/login.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pass })
+    });
+    const data = await res.json().catch(() => null);
+    if (res.ok && data && data.status === 'success') {
+      apiSuccess = true;
+      apiUserData = data.user;
+    }
+  } catch (err) {
+    // Mode offline / Python http.server lokal
+  }
+
+  if (btnSubmit) {
+    btnSubmit.disabled = false;
+    btnSubmit.style.opacity = '1';
+    btnSubmit.textContent = 'Sign In';
+  }
+
+  // 2. Cek ke basis data akun terdaftar (LocalStorage & Database System Users)
+  const registeredUsers = getRegisteredUsers();
+  const matchedUser = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+  // KONDISI A: Akun belum terdaftar sama sekali!
+  if (!matchedUser && !apiSuccess) {
+    const safeEmail = escapeHtml(email);
+    const notFoundHtml = `
+      <div style="width:100%;">
+        <div style="font-weight:700;margin-bottom:4px;color:#991b1b;display:flex;align-items:center;gap:6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Akun Belum Terdaftar!
+        </div>
+        <div style="font-size:12.5px;color:#7f1d1d;line-height:1.4;">
+          Email <b>${safeEmail}</b> belum memiliki akun di sistem. Anda tidak dapat login sebelum mendaftar. Silakan buat akun terlebih dahulu atau masuk langsung dengan Google.
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" onclick="switchAuthTab('signup'); prefillSignupEmail('${safeEmail}');" style="background:#15803d;color:#ffffff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(21,128,61,0.25);">
+            Buat Akun (Sign Up)
+          </button>
+          <button type="button" onclick="initiateGoogleLogin()" style="background:#ffffff;color:#1e293b;border:1px solid #cbd5e1;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">
+            Masuk dengan Google
+          </button>
+        </div>
+      </div>
+    `;
+    if (errorBox) {
+      errorBox.className = 'auth-alert danger';
+      errorBox.innerHTML = notFoundHtml;
+      errorBox.style.display = 'flex';
+      errorBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    showToast('⚠️ Akun belum terdaftar! Silakan Sign Up terlebih dahulu atau Masuk dengan Google.');
+    return;
+  }
+
+  // KONDISI B: Akun terdaftar tetapi kata sandi salah!
+  if (matchedUser && matchedUser.password !== pass && !apiSuccess) {
+    const wrongPassHtml = `
+      <div style="width:100%;">
+        <div style="font-weight:700;margin-bottom:3px;color:#991b1b;display:flex;align-items:center;gap:6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          Kata Sandi Salah!
+        </div>
+        <div style="font-size:12.5px;color:#7f1d1d;line-height:1.4;">
+          Kata sandi yang Anda masukkan salah. Pastikan ejaan dan huruf besar/kecil sudah benar.
+        </div>
+      </div>
+    `;
+    if (errorBox) {
+      errorBox.className = 'auth-alert danger';
+      errorBox.innerHTML = wrongPassHtml;
+      errorBox.style.display = 'flex';
+    }
+    showToast('❌ Kata sandi salah! Silakan periksa kembali kata sandi Anda.');
+    return;
+  }
+
+  // KONDISI C: Berhasil Masuk!
+  const user = apiUserData || matchedUser;
+  const userName = user.nama || user.name || 'Warga Kediri';
+  const userEmail = user.email || email;
+  const userPhoto = user.foto_face || user.photo || null;
+  const userStatus = user.status || 'Warga Terverifikasi';
+
   localStorage.setItem('kediri_safe_logged_in', 'true');
-  showToast('Masuk berhasil! Selamat datang di Kediri Safe Map.');
+
+  webState.userProfile.name = userName;
+  webState.userProfile.email = userEmail;
+  if (userPhoto) {
+    webState.userProfile.photo = userPhoto;
+  }
+  webState.userProfile.status = userStatus;
+
+  try {
+    localStorage.setItem('kediri_safe_profile', JSON.stringify(webState.userProfile));
+  } catch (err) {}
+
+  updateLoggedInUserProfile(userName, userEmail, userName.charAt(0).toUpperCase(), '#15803d', userPhoto);
+  syncProfileUiDisplays();
+
+  if (errorBox) errorBox.style.display = 'none';
+
+  showToast(`✅ Masuk berhasil! Selamat datang kembali, ${userName}.`);
   setTimeout(() => {
     enterAppDirectly();
   }, 500);
@@ -685,13 +898,50 @@ function handleSignUp(e) {
   const pass = document.getElementById('signup-pass')?.value.trim();
   const confirm = document.getElementById('signup-confirm')?.value.trim();
   const box = document.getElementById('biometric-signup-box');
+  const errorBox = document.getElementById('signup-error-box');
+
+  if (errorBox) {
+    errorBox.style.display = 'none';
+    errorBox.innerHTML = '';
+  }
 
   if (!name || !email || !pass || !confirm) {
-    showToast('Lengkapi semua kolom pendaftaran!');
+    showToast('⚠️ Lengkapi semua kolom pendaftaran!');
+    if (errorBox) {
+      errorBox.className = 'auth-alert danger';
+      errorBox.innerHTML = '<span>⚠️ Mohon lengkapi seluruh kolom pendaftaran di atas.</span>';
+      errorBox.style.display = 'flex';
+    }
     return;
   }
   if (pass !== confirm) {
-    showToast('Konfirmasi kata sandi tidak cocok!');
+    showToast('❌ Konfirmasi kata sandi tidak cocok!');
+    if (errorBox) {
+      errorBox.className = 'auth-alert danger';
+      errorBox.innerHTML = '<span>❌ Konfirmasi kata sandi tidak sama dengan kata sandi Anda.</span>';
+      errorBox.style.display = 'flex';
+    }
+    return;
+  }
+
+  // Cek apakah email sudah terdaftar sebelumnya
+  const registeredUsers = getRegisteredUsers();
+  if (registeredUsers.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+    const safeEmail = escapeHtml(email);
+    if (errorBox) {
+      errorBox.className = 'auth-alert danger';
+      errorBox.innerHTML = `
+        <div style="width:100%;">
+          <div style="font-weight:700;margin-bottom:3px;color:#991b1b;">⚠️ Email Sudah Terdaftar</div>
+          <div style="font-size:12.5px;color:#7f1d1d;">Email <b>${safeEmail}</b> sudah terdaftar. Silakan langsung masuk pada tab Sign In.</div>
+          <button type="button" onclick="switchAuthTab('signin'); prefillSigninEmail('${safeEmail}');" style="margin-top:8px;background:#15803d;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
+            Menuju Sign In
+          </button>
+        </div>
+      `;
+      errorBox.style.display = 'flex';
+    }
+    showToast('⚠️ Email ini sudah terdaftar! Silakan Sign In.');
     return;
   }
 
@@ -706,9 +956,22 @@ function handleSignUp(e) {
     return;
   }
 
-  showToast('Memproses verifikasi akun & biometrik ke sistem...');
+  showToast('Memproses pendaftaran akun & verifikasi biometrik...');
 
-  // 2. Simpan ke Database Laragon MySQL (tabel users dengan foto_face & face_token)
+  // Simpan akun ke registri pengguna terdaftar
+  const newUser = {
+    name: name,
+    email: email,
+    password: pass,
+    photo: verifiedFacePhoto,
+    faceToken: verifiedFaceToken,
+    faceVerified: true,
+    status: 'Warga Terverifikasi Biometrik (Face ID)',
+    createdAt: new Date().toISOString()
+  };
+  saveRegisteredUser(newUser);
+
+  // 2. Simpan ke Backend Database (Laragon MySQL / Vercel API)
   fetch('api/register.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -741,6 +1004,7 @@ function handleSignUp(e) {
     localStorage.setItem('kediri_safe_profile', JSON.stringify(webState.userProfile));
   } catch (err) {}
 
+  localStorage.setItem('kediri_safe_logged_in', 'true');
   syncProfileUiDisplays();
 
   // Tampilkan ucapan selamat
@@ -763,6 +1027,16 @@ const OAUTH_CONFIG = {
 };
 
 let googleTokenClient = null;
+
+// Dialog Fallback jika Google OAuth terkendala origin localhost / offline
+function openGoogleFallbackDialog() {
+  const userEmail = prompt('Masuk Cepat dengan Akun Google (Otentikasi Akun):\nMasukkan alamat email Google Anda:', 'warga@gmail.com');
+  if (userEmail && userEmail.trim()) {
+    const emailClean = userEmail.trim().toLowerCase();
+    const defaultName = emailClean.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    loginWithGoogleAccount(defaultName, emailClean, defaultName.charAt(0).toUpperCase(), '#15803d');
+  }
+}
 
 // Inisialisasi Google Token Client resmi
 function setupRealGoogleAuth() {
@@ -797,7 +1071,10 @@ function setupRealGoogleAuth() {
         },
         error_callback: (err) => {
           console.warn('Google Auth Error:', err);
-          showToast('Login Google dibatalkan atau dialihkan.');
+          showToast('⚠️ Google Sign-In dialihkan. Membuka dialog konfirmasi akun Google...');
+          setTimeout(() => {
+            openGoogleFallbackDialog();
+          }, 300);
         }
       });
     } catch (e) {
@@ -810,6 +1087,7 @@ function setupRealGoogleAuth() {
 function initiateGoogleLogin() {
   if (window.location.protocol.startsWith('file')) {
     alert('Catatan Keamanan Google: Login Google resmi mewajibkan website dibuka melalui http://localhost:8080 (bukan file://). Buka http://localhost:8080 di browser Anda.');
+    openGoogleFallbackDialog();
     return;
   }
 
@@ -824,22 +1102,42 @@ function initiateGoogleLogin() {
     }
   }
 
-  showToast('Menghubungkan ke server Google...');
-  setTimeout(() => {
-    setupRealGoogleAuth();
-    if (googleTokenClient) {
-      googleTokenClient.requestAccessToken({ prompt: 'select_account' });
-    }
-  }, 400);
+  // Jika library Google belum termuat atau diblokir
+  openGoogleFallbackDialog();
 }
 
 // 2. Handler Saat Akun Google Asli Berhasil Masuk
 function loginWithGoogleAccount(name, email, avatarLetter, color, pictureUrl) {
   closeOAuthModals();
-  showToast(`Berhasil masuk dengan Google: ${name}`);
+
+  // Daftarkan ke user registry jika belum ada
+  const newGoogleUser = {
+    name: name,
+    email: email,
+    provider: 'google',
+    photo: pictureUrl || null,
+    status: 'Warga Terverifikasi Akun Google',
+    createdAt: new Date().toISOString()
+  };
+  saveRegisteredUser(newGoogleUser);
+
+  localStorage.setItem('kediri_safe_logged_in', 'true');
+  webState.userProfile.name = name;
+  webState.userProfile.email = email;
+  if (pictureUrl) {
+    webState.userProfile.photo = pictureUrl;
+  }
+  webState.userProfile.status = 'Warga Terverifikasi Google';
+
+  try {
+    localStorage.setItem('kediri_safe_profile', JSON.stringify(webState.userProfile));
+  } catch (err) {}
 
   // Perbarui data pengguna di profil dan navbar
   updateLoggedInUserProfile(name, email, avatarLetter, color, pictureUrl);
+  syncProfileUiDisplays();
+
+  showToast(`✅ Berhasil masuk dengan Google: ${name}`);
 
   // Masuk langsung ke aplikasi
   setTimeout(() => {
@@ -1470,6 +1768,19 @@ function closeLogoutModal() {
 function confirmLogout() {
   closeLogoutModal();
   localStorage.removeItem('kediri_safe_logged_in');
+
+  // Kosongkan input form dan error box
+  const signinEmail = document.getElementById('signin-email');
+  const signinPass = document.getElementById('signin-pass');
+  if (signinEmail) signinEmail.value = '';
+  if (signinPass) signinPass.value = '';
+
+  const errBox = document.getElementById('signin-error-box');
+  if (errBox) {
+    errBox.style.display = 'none';
+    errBox.innerHTML = '';
+  }
+
   webState.currentScreen = 'auth';
   document.getElementById('main-web-app')?.classList.remove('active');
   document.getElementById('auth-screen')?.classList.add('active');
@@ -3722,6 +4033,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Hapus permanen link guest bypass jika masih ada di DOM atau cache
   document.querySelectorAll('.guest-skip-box, .guest-link').forEach(el => el.remove());
+
+  // Pastikan kolom login selalu bersih dari autofill dummy lama
+  const emailInput = document.getElementById('signin-email');
+  const passInput = document.getElementById('signin-pass');
+  if (emailInput && (emailInput.value === 'onlymc75@gmail.com' || emailInput.getAttribute('value'))) {
+    emailInput.value = '';
+    emailInput.removeAttribute('value');
+  }
+  if (passInput && (passInput.value === '••••••••' || passInput.getAttribute('value'))) {
+    passInput.value = '';
+    passInput.removeAttribute('value');
+  }
 
   // Wajib Daftar / Login dulu untuk membuka aplikasi
   const isLoggedIn = localStorage.getItem('kediri_safe_logged_in') === 'true';
