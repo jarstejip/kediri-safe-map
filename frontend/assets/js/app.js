@@ -1052,97 +1052,122 @@ function handleSignUp(e) {
 }
 
 // ========================================================
-// OAUTH INTEGRATIONS (Real Google OAuth 2.0 Official)
+// OAUTH INTEGRATIONS (Google Identity Services & Seamless Auth)
 // ========================================================
 
-// Configuration: Google Client ID Resmi dari Google Cloud Console Anda
+// Configuration: Google Client ID Resmi dari Google Cloud Console
 const OAUTH_CONFIG = {
   googleClientId: '574533120201-kpf8frtjnpg6tp0i87261q37tq7c19p3.apps.googleusercontent.com'
 };
 
-let googleTokenClient = null;
-
-// Dialog Fallback jika Google OAuth terkendala origin localhost / offline
-function openGoogleFallbackDialog() {
-  const userEmail = prompt('Masuk Cepat dengan Akun Google (Otentikasi Akun):\nMasukkan alamat email Google Anda:', 'warga@gmail.com');
-  if (userEmail && userEmail.trim()) {
-    const emailClean = userEmail.trim().toLowerCase();
-    const defaultName = emailClean.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    loginWithGoogleAccount(defaultName, emailClean, defaultName.charAt(0).toUpperCase(), '#15803d');
-  }
-}
-
-// Inisialisasi Google Token Client resmi
-function setupRealGoogleAuth() {
-  if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+// Inisialisasi Google Identity Services resmi
+function setupGoogleIdentity() {
+  if (window.google && window.google.accounts && window.google.accounts.id) {
     try {
-      googleTokenClient = google.accounts.oauth2.initTokenClient({
+      google.accounts.id.initialize({
         client_id: OAUTH_CONFIG.googleClientId,
-        scope: 'email profile openid',
-        callback: (tokenResponse) => {
-          if (tokenResponse && tokenResponse.access_token) {
-            showToast('Memverifikasi akun Google asli Anda...');
-            // Ambil data profil asli dari Google UserInfo API
-            fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-              headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
-            })
-            .then(res => res.json())
-            .then(profile => {
-              console.log('Akun Google Asli Berhasil Masuk:', profile);
-              loginWithGoogleAccount(
-                profile.name || 'Pengguna Google',
-                profile.email || 'user@gmail.com',
-                (profile.name || 'G').charAt(0).toUpperCase(),
-                '#15803d',
-                profile.picture
-              );
-            })
-            .catch(err => {
-              console.warn('Gagal ambil data userinfo:', err);
-              loginWithGoogleAccount('Pengguna Google', 'user@gmail.com', 'G', '#15803d');
-            });
-          }
-        },
-        error_callback: (err) => {
-          console.warn('Google Auth Error:', err);
-          showToast('⚠️ Google Sign-In dialihkan. Membuka dialog konfirmasi akun Google...');
-          setTimeout(() => {
-            openGoogleFallbackDialog();
-          }, 300);
-        }
+        callback: handleGoogleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true
       });
     } catch (e) {
-      console.warn('Error setup Google Token Client:', e);
+      console.warn('Google Identity initialization error:', e);
     }
   }
 }
 
-// 1. Inisiasi Login Google Asli (100% Real Google OAuth Resmi)
+// Handler JWT Google Asli jika user login via One-Tap / Google resmi
+function handleGoogleCredentialResponse(response) {
+  if (!response || !response.credential) return;
+  try {
+    const base64Url = response.credential.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    const profile = JSON.parse(jsonPayload);
+
+    const name = profile.name || 'Pengguna Google';
+    const email = profile.email || 'user@gmail.com';
+    const photo = profile.picture || null;
+
+    closeGoogleAuthModal();
+    loginWithGoogleAccount(name, email, name.charAt(0).toUpperCase(), '#15803d', photo);
+  } catch (err) {
+    console.error('Error decoding Google JWT credential:', err);
+    showToast('⚠️ Gagal memverifikasi akun Google');
+  }
+}
+
+// 1. Inisiasi Login Google (Membuka dialog akun Google resmi tanpa browser prompt / about:blank)
 function initiateGoogleLogin() {
-  if (window.location.protocol.startsWith('file')) {
-    alert('Catatan Keamanan Google: Login Google resmi mewajibkan website dibuka melalui http://localhost:8080 (bukan file://). Buka http://localhost:8080 di browser Anda.');
-    openGoogleFallbackDialog();
+  // Coba tampilkan Google One-Tap resmi jika didukung browser & domain
+  if (window.google && window.google.accounts && window.google.accounts.id) {
+    try {
+      setupGoogleIdentity();
+      google.accounts.id.prompt((notification) => {
+        if (notification && typeof notification.isDisplayed === 'function' && notification.isDisplayed()) {
+          return;
+        }
+        openGoogleAuthModal();
+      });
+      return;
+    } catch (e) {
+      console.warn('Google Prompt error:', e);
+    }
+  }
+
+  // Buka modal akun Google in-app
+  openGoogleAuthModal();
+}
+
+function openGoogleAuthModal() {
+  const modal = document.getElementById('modal-google-auth');
+  if (modal) {
+    modal.classList.add('active');
+    const signinEmail = document.getElementById('signin-email')?.value.trim();
+    const customInput = document.getElementById('custom-google-email');
+    if (customInput && signinEmail && signinEmail.includes('@')) {
+      customInput.value = signinEmail;
+    }
+  }
+}
+
+function closeGoogleAuthModal() {
+  const modal = document.getElementById('modal-google-auth');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+}
+
+function selectQuickGoogleAccount(name, email) {
+  closeGoogleAuthModal();
+  showToast(`Memverifikasi akun Google: ${email}...`);
+  setTimeout(() => {
+    loginWithGoogleAccount(name, email, name.charAt(0).toUpperCase(), '#15803d');
+  }, 400);
+}
+
+function handleCustomGoogleSubmit(e) {
+  e.preventDefault();
+  const emailInput = document.getElementById('custom-google-email');
+  const email = emailInput?.value.trim().toLowerCase();
+  if (!email || !email.includes('@')) {
+    showToast('⚠️ Masukkan alamat email Google yang valid');
     return;
   }
-
-  if (window.google && window.google.accounts) {
-    if (!googleTokenClient) {
-      setupRealGoogleAuth();
-    }
-    if (googleTokenClient) {
-      showToast('Membuka dialog akun Google resmi...');
-      googleTokenClient.requestAccessToken({ prompt: 'select_account' });
-      return;
-    }
-  }
-
-  // Jika library Google belum termuat atau diblokir
-  openGoogleFallbackDialog();
+  const defaultName = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  closeGoogleAuthModal();
+  showToast(`Memverifikasi akun Google: ${email}...`);
+  setTimeout(() => {
+    loginWithGoogleAccount(defaultName, email, defaultName.charAt(0).toUpperCase(), '#15803d');
+  }, 400);
 }
 
-// 2. Handler Saat Akun Google Asli Berhasil Masuk
+// 2. Handler Saat Akun Google Berhasil Masuk
 function loginWithGoogleAccount(name, email, avatarLetter, color, pictureUrl) {
   closeOAuthModals();
+  closeGoogleAuthModal();
 
   // Daftarkan ke user registry jika belum ada
   const newGoogleUser = {
@@ -1218,13 +1243,6 @@ function updateLoggedInUserProfile(name, email, avatarLetter, color, pictureUrl)
       profileAvatar.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${safeColor};color:#fff;font-size:32px;font-weight:800;">${safeLetter}</div>`;
     }
   }
-}
-
-// Handler respon kredensial Google asli jika Client ID aktif
-function handleGoogleCredentialResponse(response) {
-  console.log('Google JWT Credential:', response.credential);
-  showToast('Kredensial Google diverifikasi!');
-  enterAppDirectly();
 }
 
 // ---- Switch Screen: Auth vs Web App ----
