@@ -2,50 +2,7 @@
 // KEDIRI SAFE MAP - VERCEL SERVERLESS API: CITIZEN REPORTS
 // ========================================================
 
-const defaultReports = [
-  {
-    id: 1,
-    title: 'Pohon Tumbang Menutup Jalan Brawijaya',
-    category: 'Pohon Tumbang',
-    location: 'Kota Kediri',
-    desc: 'Pohon tumbang menghalangi sebagian badan jalan pasca hujan deras disertai angin kencang.',
-    status: 'diverifikasi',
-    statusText: 'DIVERIFIKASI',
-    step: 2,
-    officer: 'DLHKP / BPBD Kota Kediri',
-    time: '27 Okt 13:40 WIB',
-    latitude: -7.8185,
-    longitude: 112.0120
-  },
-  {
-    id: 2,
-    title: 'Lampu Penerangan Jalan Umum Padam',
-    category: 'Lampu Jalan Rusak',
-    location: 'Kota Kediri',
-    desc: 'Lampu PJU sepanjang jalan padam sejak 2 hari, jalanan gelap rawan tindak kejahatan.',
-    status: 'diproses',
-    statusText: 'DIPROSES',
-    step: 3,
-    officer: 'Dinas Perhubungan Kota Kediri',
-    time: '26 Okt 20:15 WIB',
-    latitude: -7.8240,
-    longitude: 112.0085
-  },
-  {
-    id: 3,
-    title: 'Genangan Air di Simpang Dhoho',
-    category: 'Genangan Air & Banjir',
-    location: 'Kota Kediri',
-    desc: 'Drainase tersumbat menyebabkan genangan air setinggi 15 cm setelah hujan.',
-    status: 'selesai',
-    statusText: 'SELESAI',
-    step: 4,
-    officer: 'DPUPR Kota Kediri',
-    time: '25 Okt 16:30 WIB',
-    latitude: -7.8160,
-    longitude: 112.0150
-  }
-];
+const defaultReports = [];
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

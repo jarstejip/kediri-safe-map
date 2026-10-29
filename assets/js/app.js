@@ -1235,8 +1235,11 @@ function loadStoredProfileData() {
     if (storedReports) {
       try {
         const parsed = JSON.parse(storedReports);
-        // Hapus laporan mock contoh (id 1714001 & 1714002) agar riwayat murni kosong jika belum ada laporan buatan user
-        webState.reports = Array.isArray(parsed) ? parsed.filter(r => r.id !== 1714001 && r.id !== 1714002) : [];
+        // Hapus laporan mock / dummy agar riwayat murni kosong jika belum ada laporan nyata buatan warga
+        const mockTitles = ['Pohon Tumbang Menutup Jalan Brawijaya', 'Lampu Penerangan Jalan Umum Padam', 'Genangan Air di Simpang Dhoho'];
+        webState.reports = Array.isArray(parsed)
+          ? parsed.filter(r => r.id !== 1 && r.id !== 2 && r.id !== 3 && r.id !== 1714001 && r.id !== 1714002 && !mockTitles.some(t => (r.title || '').includes(t)))
+          : [];
       } catch (err) {
         webState.reports = [];
       }
@@ -4066,16 +4069,23 @@ async function syncDatabaseReports() {
     const res = await fetch('api/reports.php');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.status === 'success' && Array.isArray(json.data) && json.data.length > 0) {
-        const localIds = new Set(webState.reports.map(r => r.id));
-        json.data.forEach(dbRep => {
-          if (!localIds.has(dbRep.id)) {
-            webState.reports.push(dbRep);
-            localIds.add(dbRep.id);
-          }
-        });
+      if (json && json.status === 'success' && Array.isArray(json.data)) {
+        const mockTitles = ['Pohon Tumbang Menutup Jalan Brawijaya', 'Lampu Penerangan Jalan Umum Padam', 'Genangan Air di Simpang Dhoho'];
+        const validDbReports = json.data.filter(r => r.id !== 1 && r.id !== 2 && r.id !== 3 && !mockTitles.some(t => (r.title || '').includes(t)));
+        if (validDbReports.length > 0) {
+          const localIds = new Set(webState.reports.map(r => r.id));
+          validDbReports.forEach(dbRep => {
+            if (!localIds.has(dbRep.id)) {
+              webState.reports.push(dbRep);
+              localIds.add(dbRep.id);
+            }
+          });
+        }
         renderWebReportsStack();
         syncProfileUiDisplays();
+        if (typeof renderModalReports === 'function') {
+          renderModalReports('all');
+        }
       }
     }
   } catch (e) {}
