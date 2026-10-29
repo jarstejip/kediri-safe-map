@@ -33,3 +33,9 @@ vendor/
 
 # Local Laragon / Web server session files
 *.sess
+
+# Agent and Skill tooling
+.agents/
+.claude/
+skills-lock.json
+

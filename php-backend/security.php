@@ -40,9 +40,24 @@ function validateEnum(string $value, array $allowed): bool {
     return in_array($value, $allowed, true);
 }
 
+// Dapatkan IP klien riil dengan dukungan Cloudflare & Reverse Proxy aman
+function getClientIp(): string {
+    $headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'];
+    foreach ($headers as $header) {
+        if (!empty($_SERVER[$header])) {
+            $ipList = explode(',', (string)$_SERVER[$header]);
+            $candidate = trim($ipList[0]);
+            if (filter_var($candidate, FILTER_VALIDATE_IP)) {
+                return $candidate;
+            }
+        }
+    }
+    return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+}
+
 // ---- Rate Limiter sederhana berbasis file (per IP, per endpoint) ----
 function rateLimit(string $endpoint, int $maxRequests = 10, int $windowSeconds = 60): void {
-    $ip       = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $ip       = getClientIp();
     $safeIp   = preg_replace('/[^a-fA-F0-9:\.]/', '', $ip);
     $dir      = sys_get_temp_dir() . '/ksm_ratelimit';
     if (!is_dir($dir)) { @mkdir($dir, 0700, true); }

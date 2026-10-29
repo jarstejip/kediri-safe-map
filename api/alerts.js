@@ -3,10 +3,23 @@
 // Live BMKG & BPBD Government Data Provider
 // ========================================================
 
+const ALLOWED_ORIGINS = [
+  'https://www.kedirisafe.my.id',
+  'https://kedirisafe.my.id',
+  'http://localhost:8080',
+  'http://127.0.0.1:8080'
+];
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGINS.includes(origin) || origin.endsWith('.vercel.app')) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', 'https://www.kedirisafe.my.id');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key');
+  res.setHeader('Vary', 'Origin');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

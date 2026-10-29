@@ -687,6 +687,7 @@ async function handleSignIn(e) {
   // 2. Coba verifikasi API backend (opsional, dengan timeout 3 detik)
   let apiSuccess = false;
   let apiUserData = null;
+  let apiToken = null;
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -701,6 +702,7 @@ async function handleSignIn(e) {
     if (res.ok && data && data.status === 'success') {
       apiSuccess = true;
       apiUserData = data.user;
+      apiToken = data.token;
     }
   } catch (err) {
     // Mode offline / timeout — lanjutkan dengan localStorage
@@ -742,6 +744,9 @@ async function handleSignIn(e) {
   const userStatus = user.status || 'Warga Terverifikasi';
 
   localStorage.setItem('kediri_safe_logged_in', 'true');
+  if (apiToken) {
+    localStorage.setItem('kediri_safe_session_token', apiToken);
+  }
 
   webState.userProfile.name = userName;
   webState.userProfile.email = userEmail;
@@ -1170,14 +1175,15 @@ function updateLoggedInUserProfile(name, email, avatarLetter, color, pictureUrl)
   const safeColor  = /^#[0-9a-fA-F]{3,6}$/.test(color || '') ? color : '#15803d';
   const safeLetter = escapeHtml(avatarLetter || (name ? name.charAt(0).toUpperCase() : '?'));
 
+  const safePicUrl = (pictureUrl && typeof pictureUrl === 'string' && (pictureUrl.startsWith('data:image/') || pictureUrl.startsWith('https://'))) ? escapeHtml(pictureUrl) : null;
+
   // Update Navbar User Chip
   const navUser   = document.querySelector('.user-name-label');
   const navAvatar = document.querySelector('.user-avatar-sm');
   if (navUser) navUser.textContent = name; // textContent aman
   if (navAvatar) {
-    if (pictureUrl && typeof pictureUrl === 'string' && pictureUrl.startsWith('data:image/')) {
-      // Hanya izinkan base64 data URI untuk gambar
-      navAvatar.innerHTML = `<img src="${pictureUrl}" alt="${safeName}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    if (safePicUrl) {
+      navAvatar.innerHTML = `<img src="${safePicUrl}" alt="${safeName}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
     } else {
       navAvatar.textContent = safeLetter;
       if (safeColor) navAvatar.style.background = safeColor;
@@ -1191,8 +1197,8 @@ function updateLoggedInUserProfile(name, email, avatarLetter, color, pictureUrl)
   if (profileName)  profileName.textContent  = name;   // textContent aman
   if (profileEmail) profileEmail.textContent = email;  // textContent aman
   if (profileAvatar) {
-    if (pictureUrl && typeof pictureUrl === 'string' && pictureUrl.startsWith('data:image/')) {
-      profileAvatar.innerHTML = `<img src="${pictureUrl}" alt="${safeName}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    if (safePicUrl) {
+      profileAvatar.innerHTML = `<img src="${safePicUrl}" alt="${safeName}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
     } else {
       profileAvatar.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${safeColor};color:#fff;font-size:32px;font-weight:800;">${safeLetter}</div>`;
     }
@@ -1354,9 +1360,12 @@ function syncProfileUiDisplays() {
 
   // Avatar and Initials
   const initials = p.name ? p.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'FK';
+  const safePhotoSrc = (p.photo && typeof p.photo === 'string' && (p.photo.startsWith('data:image/') || p.photo.startsWith('https://'))) ? escapeHtml(p.photo) : null;
+  const safePName = escapeHtml(p.name || '');
+
   document.querySelectorAll('.user-avatar-sm').forEach(el => {
-    if (p.photo && typeof p.photo === 'string' && p.photo.startsWith('data:image/')) {
-      el.innerHTML = `<img src="${p.photo}" alt="${escapeHtml(p.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    if (safePhotoSrc) {
+      el.innerHTML = `<img src="${safePhotoSrc}" alt="${safePName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     } else if (p.avatar && p.avatar !== 'default' && p.avatar !== '👤') {
       el.textContent = p.avatar;
       el.style.fontSize = '14px';
@@ -1368,8 +1377,8 @@ function syncProfileUiDisplays() {
 
   const avatarDisplay = document.getElementById('profile-avatar-display');
   if (avatarDisplay) {
-    if (p.photo && typeof p.photo === 'string' && p.photo.startsWith('data:image/')) {
-      avatarDisplay.innerHTML = `<img src="${p.photo}" alt="${escapeHtml(p.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    if (safePhotoSrc) {
+      avatarDisplay.innerHTML = `<img src="${safePhotoSrc}" alt="${safePName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     } else if (p.avatar && p.avatar !== 'default' && p.avatar !== '👤') {
       avatarDisplay.innerHTML = `<span style="font-size:36px;line-height:1;">${escapeHtml(p.avatar)}</span>`;
     } else {
