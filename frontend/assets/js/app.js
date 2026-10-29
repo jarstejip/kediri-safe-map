@@ -2008,58 +2008,56 @@ function renderDrawerFacilityCards() {
   }).join('');
 }
 
-// Kontrol Buka / Tutup Drawer Fasilitas (Mobile Gesture & Desktop)
-function setDrawerCollapsed(isCollapsed) {
+// ========================================================
+// KONTROL SEMBUNYIKAN & TAMPILKAN (HIDE/SHOW) FASILITAS TERDEKAT
+// ========================================================
+function hideFacilityDrawer() {
   const drawer = document.getElementById('main-facilities-drawer');
-  if (!drawer) return;
+  const pill = document.getElementById('btn-show-facilities-pill');
+  if (drawer) {
+    drawer.classList.add('drawer-hidden');
+  }
+  if (pill) {
+    pill.classList.remove('hidden');
+  }
+  showToast('ℹ️ Panel fasilitas disembunyikan. Ketuk "Fasilitas Terdekat" untuk membuka.');
+}
 
-  if (isCollapsed) {
-    drawer.classList.add('minimized');
-  } else {
+function showFacilityDrawer() {
+  const drawer = document.getElementById('main-facilities-drawer');
+  const pill = document.getElementById('btn-show-facilities-pill');
+  if (drawer) {
+    drawer.classList.remove('drawer-hidden');
     drawer.classList.remove('minimized');
   }
+  if (pill) {
+    pill.classList.add('hidden');
+  }
+}
 
-  const btn = document.getElementById('drawer-toggle-btn');
-  const subTitle = document.getElementById('drawer-sub-title') || document.querySelector('.drawer-sub');
-
-  if (drawer.classList.contains('minimized')) {
-    if (btn) {
-      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
-      btn.title = "Buka panel fasilitas";
-      btn.setAttribute('aria-expanded', 'false');
-    }
-    if (subTitle) {
-      if (!subTitle.dataset.prevText) {
-        subTitle.dataset.prevText = subTitle.textContent;
-      }
-      subTitle.innerHTML = `<span style="color:#15803d;font-weight:700;">👆 Ketuk / geser ke atas untuk membuka</span>`;
-    }
+function toggleFacilityDrawerVisible() {
+  const drawer = document.getElementById('main-facilities-drawer');
+  if (!drawer) return;
+  if (drawer.classList.contains('drawer-hidden')) {
+    showFacilityDrawer();
   } else {
-    if (btn) {
-      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
-      btn.title = "Sembunyikan panel";
-      btn.setAttribute('aria-expanded', 'true');
-    }
-    if (subTitle) {
-      if (kediriFacilities.length > 0 && kediriFacilities[0].distance) {
-        subTitle.textContent = `📍 Terdekat: ${kediriFacilities[0].name} (${kediriFacilities[0].distance})`;
-      } else if (subTitle.dataset.prevText) {
-        subTitle.textContent = subTitle.dataset.prevText;
-      } else {
-        subTitle.textContent = 'Mendeteksi lokasi & fasilitas darurat terdekat...';
-      }
-    }
+    hideFacilityDrawer();
   }
 }
 
 function toggleDrawerCollapse() {
-  const drawer = document.getElementById('main-facilities-drawer');
-  if (!drawer) return;
-  const isCurrentlyMinimized = drawer.classList.contains('minimized');
-  setDrawerCollapsed(!isCurrentlyMinimized);
+  toggleFacilityDrawerVisible();
 }
 
-// Inisialisasi gestur swipe geser ke bawah (tutup) dan geser ke atas (buka)
+function setDrawerCollapsed(isCollapsed) {
+  if (isCollapsed) {
+    hideFacilityDrawer();
+  } else {
+    showFacilityDrawer();
+  }
+}
+
+// Inisialisasi gestur swipe geser ke bawah (sembunyikan) dan geser ke atas (tampilkan)
 function initFacilitiesDrawerGestures() {
   const drawer = document.getElementById('main-facilities-drawer');
   if (!drawer || drawer.dataset.gestureBound === 'true') return;
@@ -2084,7 +2082,7 @@ function initFacilitiesDrawerGestures() {
     const deltaY = e.touches[0].clientY - touchStartY;
     const deltaX = e.touches[0].clientX - touchStartX;
 
-    // Abaikan gestur jika pengguna sedang scroll horizontal pada daftar kartu fasilitas
+    // Abaikan jika pengguna sedang scroll horizontal pada daftar kartu fasilitas
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 15) {
       isSwiping = false;
     }
@@ -2094,40 +2092,18 @@ function initFacilitiesDrawerGestures() {
     if (!isSwiping || !e.changedTouches || e.changedTouches.length === 0) return;
     const deltaY = e.changedTouches[0].clientY - touchStartY;
     const deltaX = e.changedTouches[0].clientX - touchStartX;
-    const timeDiff = Date.now() - touchStartTime;
 
     isSwiping = false;
 
     // Deteksi gestur vertikal yang dominan
     if (Math.abs(deltaY) > Math.abs(deltaX)) {
-      // Geser jari ke BAWAH (> 25px) -> Tutup / Minimalkan panel
-      if (deltaY > 25) {
-        setDrawerCollapsed(true);
+      // Geser jari ke BAWAH (> 28px) -> Sembunyikan panel
+      if (deltaY > 28) {
+        hideFacilityDrawer();
         return;
-      }
-      // Geser jari ke ATAS (< -20px) -> Buka / Kembalikan panel
-      if (deltaY < -20) {
-        setDrawerCollapsed(false);
-        return;
-      }
-    }
-
-    // Jika tap singkat pada panel yang sedang minim -> otomatis buka kembali
-    if (timeDiff < 300 && Math.abs(deltaY) < 12 && Math.abs(deltaX) < 12) {
-      if (drawer.classList.contains('minimized')) {
-        setDrawerCollapsed(false);
       }
     }
   }, { passive: true });
-
-  // Klik di mana saja pada drawer saat dalam kondisi minim akan otomatis mengembalikannya
-  drawer.addEventListener('click', (e) => {
-    if (drawer.classList.contains('minimized')) {
-      if (!e.target.closest('.drawer-link-btn')) {
-        setDrawerCollapsed(false);
-      }
-    }
-  });
 }
 
 // Deteksi nama desa / kecamatan pengguna
@@ -2774,6 +2750,7 @@ function renderDirectoryFacilities(category, query) {
 function focusFacilityOnMap(facilityId) {
   closeAllFacilitiesModal();
   switchWebTab('map');
+  showFacilityDrawer();
 
   const facility = kediriFacilities.find(f => f.id === facilityId);
   if (!facility || !webState.map) return;
@@ -3111,6 +3088,8 @@ async function startNavigationToFacility(facilityId) {
   // Hide regular drawer & map toolbar
   const drawerEl = document.getElementById('main-facilities-drawer');
   if (drawerEl) drawerEl.style.display = 'none';
+  const pillEl = document.getElementById('btn-show-facilities-pill');
+  if (pillEl) pillEl.style.display = 'none';
   const queryBar = document.querySelector('.map-query-toolbar');
   if (queryBar) queryBar.style.display = 'none';
 
@@ -3329,7 +3308,9 @@ function stopNavigationMode(silent = false) {
 
   // Restore drawer & toolbar
   const drawerEl = document.getElementById('main-facilities-drawer');
-  if (drawerEl) drawerEl.style.display = 'block';
+  if (drawerEl) drawerEl.style.display = '';
+  const pillEl = document.getElementById('btn-show-facilities-pill');
+  if (pillEl) pillEl.style.display = '';
   const queryBar = document.querySelector('.map-query-toolbar');
   if (queryBar) queryBar.style.display = 'flex';
 
