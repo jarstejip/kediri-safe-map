@@ -1,10 +1,12 @@
 <?php
 // ========================================================
 // KEDIRI SAFE MAP - USER REGISTRATION & BIOMETRIC API
-// Endpoint Pendaftaran Pengguna dengan Face Recognition Anti-Fraud
+// Endpoint Pendaftaran Pengguna (Anti SQL Injection)
 // ========================================================
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/security.php';
+
 if (PHP_SAPI !== 'cli') {
     header('Content-Type: application/json; charset=utf-8');
 }
@@ -12,89 +14,109 @@ if (PHP_SAPI !== 'cli') {
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 if ($method !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Hanya metode POST yang diizinkan']);
-    exit;
+    jsonError(405, 'Hanya metode POST yang diizinkan');
 }
 
-$raw = file_get_contents('php://input');
+// Rate limit: max 5 pendaftaran per IP per 5 menit
+rateLimit('register', 5, 300);
+
+$raw     = file_get_contents('php://input');
 $payload = json_decode($raw, true);
 
-if (!$payload) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Format payload tidak valid']);
-    exit;
+if (!is_array($payload)) {
+    jsonError(400, 'Format payload tidak valid');
 }
 
-$nama = trim($payload['nama'] ?? $payload['name'] ?? '');
-$email = trim($payload['email'] ?? '');
-$pass = trim($payload['password'] ?? '');
-$fotoFace = $payload['foto_face'] ?? null;
-$faceToken = $payload['face_token'] ?? null;
+// ---- Ambil & validasi input ----
+$nama         = trim($payload['nama'] ?? $payload['name'] ?? '');
+$email        = trim($payload['email'] ?? '');
+$pass         = trim($payload['password'] ?? '');
+$fotoFace     = $payload['foto_face'] ?? null;
+$faceToken    = $payload['face_token'] ?? null;
 $faceVerified = !empty($payload['face_verified']) ? 1 : 0;
 
 if (empty($nama) || empty($email) || empty($pass)) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Nama, email, dan kata sandi wajib diisi']);
-    exit;
+    jsonError(400, 'Nama, email, dan kata sandi wajib diisi');
 }
 
-// Validasi Wajib Face Recognition (Anti-Fraud)
+if (!validateName($nama)) {
+    jsonError(422, 'Nama hanya boleh berisi huruf, spasi, dan tanda hubung (2-100 karakter)', 'nama');
+}
+
+if (!validateEmail($email)) {
+    jsonError(422, 'Format email tidak valid', 'email');
+}
+
+if (!validatePassword($pass)) {
+    jsonError(422, 'Kata sandi minimal 6 karakter dan maksimal 128 karakter', 'password');
+}
+
+// Validasi biometrik (wajib)
 if (!$faceVerified || empty($fotoFace)) {
     http_response_code(422);
     echo json_encode([
-        'status' => 'error',
-        'code' => 'BIOMETRIC_REQUIRED',
-        'message' => 'Verifikasi Wajah Biometrik Wajib dilakukan untuk mencegah akun fiktif / penipuan.'
-    ]);
+        'status'  => 'error',
+        'code'    => 'BIOMETRIC_REQUIRED',
+        'message' => 'Verifikasi Wajah Biometrik wajib dilakukan untuk mencegah akun fiktif / penipuan.'
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
+// Validasi ukuran foto (base64 foto wajah, max ~2MB)
+if (strlen($fotoFace) > 2_800_000) {
+    jsonError(413, 'Ukuran foto wajah terlalu besar (maks 2MB)');
+}
+
+// ---- Mode fallback (tanpa DB) ----
 if (!$pdo) {
-    // Mode fallback jika MySQL tidak terhubung
     echo json_encode([
-        'status' => 'success',
-        'mode' => 'local_fallback',
+        'status'  => 'success',
+        'mode'    => 'local_fallback',
         'message' => 'Pendaftaran berhasil diverifikasi biometrik secara lokal.'
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
+// ---- Query dengan Prepared Statement ----
 try {
-    // Cek apakah email sudah terdaftar
-    $checkStmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+    // Cek apakah email sudah terdaftar — binding cegah SQL Injection
+    $checkStmt = $pdo->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
     $checkStmt->execute([$email]);
     if ($checkStmt->fetch()) {
-        http_response_code(409);
-        echo json_encode(['status' => 'error', 'message' => 'Email ini sudah terdaftar. Silakan gunakan email lain atau Sign In.']);
-        exit;
+        jsonError(409, 'Email ini sudah terdaftar. Silakan gunakan email lain atau Sign In.');
     }
 
-    $passHash = md5($pass); // Sesuai format hash eksisting dump
-    $stmt = $pdo->prepare("INSERT INTO users (nama, email, password, role, foto_face, face_verified, face_token, created_at) VALUES (?, ?, ?, 'user', ?, ?, ?, NOW())");
+    // Hash password dengan bcrypt (bukan MD5!)
+    $passHash  = hashPassword($pass);
+    $safeToken = $faceToken ?: ('FACE-' . strtoupper(bin2hex(random_bytes(6))));
+
+    $stmt = $pdo->prepare(
+        "INSERT INTO users (nama, email, password, role, foto_face, face_verified, face_token, created_at)
+         VALUES (?, ?, ?, 'user', ?, 1, ?, NOW())"
+    );
     $stmt->execute([
-        $nama,
-        $email,
-        $passHash,
-        $fotoFace,
-        1,
-        $faceToken ?: ('FACE-' . strtoupper(substr(md5(uniqid()), 0, 12)))
+        $nama,      // sudah divalidasi
+        $email,     // sudah divalidasi format
+        $passHash,  // bcrypt hash
+        $fotoFace,  // base64 image
+        $safeToken
     ]);
 
     $userId = $pdo->lastInsertId();
 
     echo json_encode([
-        'status' => 'success',
+        'status'  => 'success',
         'message' => 'Pendaftaran akun resmi berhasil dengan verifikasi biometrik wajah.',
-        'user_id' => $userId,
-        'user' => [
-            'id' => $userId,
-            'nama' => $nama,
-            'email' => $email,
-            'face_verified' => true
+        'user_id' => (int)$userId,
+        'user'    => [
+            'id'           => (int)$userId,
+            'nama'         => $nama,
+            'email'        => $email,
+            'face_verified'=> true
         ]
-    ]);
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => 'Gagal menyimpan ke database: ' . $e->getMessage()]);
+    ], JSON_UNESCAPED_UNICODE);
+
+} catch (PDOException $e) {
+    error_log('[KSM Register Error] ' . $e->getMessage());
+    jsonError(500, 'Gagal menyimpan akun. Silakan coba lagi.');
 }

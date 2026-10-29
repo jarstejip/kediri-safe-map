@@ -458,14 +458,37 @@ const kediriFacilities = [
 ];
 
 // ---- HTML Sanitizer Helper ----
+// Escape semua karakter khusus HTML — cegah XSS reflected & stored
 function escapeHtml(str) {
-  if (!str) return '';
+  if (str === null || str === undefined) return '';
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/'/g, '&#039;')
+    .replace(/`/g, '&#096;')
+    .replace(/\//g, '&#047;');
+}
+
+// Escape untuk nilai di dalam atribut JS event (onclick, dll)
+// Gunakan ini khusus untuk nilai yang masuk ke string onclick="...('NILAI_INI')..."
+function escapeJsAttr(str) {
+  if (str === null || str === undefined) return '';
+  // Hanya izinkan karakter aman (email valid chars) — tolak semua yang berbahaya
+  return String(str).replace(/[^a-zA-Z0-9@._\-+]/g, '');
+}
+
+// Validasi URL — pastikan hanya http/https
+function sanitizeUrl(url) {
+  if (!url) return '#';
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return url;
+    }
+  } catch (e) {}
+  return '#';
 }
 
 // ========================================================
@@ -619,37 +642,19 @@ async function handleSignIn(e) {
     btnSubmit.textContent = 'Memverifikasi...';
   }
 
-  // 1. Coba verifikasi dengan API backend jika server backend (PHP/Vercel) aktif
-  let apiSuccess = false;
-  let apiUserData = null;
-  try {
-    const res = await fetch('api/login.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, password: pass })
-    });
-    const data = await res.json().catch(() => null);
-    if (res.ok && data && data.status === 'success') {
-      apiSuccess = true;
-      apiUserData = data.user;
-    }
-  } catch (err) {
-    // Mode offline / Python http.server lokal
-  }
-
-  if (btnSubmit) {
-    btnSubmit.disabled = false;
-    btnSubmit.style.opacity = '1';
-    btnSubmit.textContent = 'Sign In';
-  }
-
-  // 2. Cek ke basis data akun terdaftar (LocalStorage & Database System Users)
+  // 1. Cek LANGSUNG ke basis data akun terdaftar (LocalStorage) — tanpa tunggu API
   const registeredUsers = getRegisteredUsers();
   const matchedUser = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
 
-  // KONDISI A: Akun belum terdaftar sama sekali!
-  if (!matchedUser && !apiSuccess) {
+  // Jika akun TIDAK ditemukan di localStorage, langsung tolak — jangan tunggu API
+  if (!matchedUser) {
+    if (btnSubmit) {
+      btnSubmit.disabled = false;
+      btnSubmit.style.opacity = '1';
+      btnSubmit.textContent = 'Sign In';
+    }
     const safeEmail = escapeHtml(email);
+    const safeEmailJs = escapeJsAttr(email); // aman untuk onclick attribute
     const notFoundHtml = `
       <div style="width:100%;">
         <div style="font-weight:700;margin-bottom:4px;color:#991b1b;display:flex;align-items:center;gap:6px;">
@@ -660,7 +665,7 @@ async function handleSignIn(e) {
           Email <b>${safeEmail}</b> belum memiliki akun di sistem. Anda tidak dapat login sebelum mendaftar. Silakan buat akun terlebih dahulu atau masuk langsung dengan Google.
         </div>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button type="button" onclick="switchAuthTab('signup'); prefillSignupEmail('${safeEmail}');" style="background:#15803d;color:#ffffff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(21,128,61,0.25);">
+          <button type="button" onclick="switchAuthTab('signup'); prefillSignupEmail('${safeEmailJs}');" style="background:#15803d;color:#ffffff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(21,128,61,0.25);">
             Buat Akun (Sign Up)
           </button>
           <button type="button" onclick="initiateGoogleLogin()" style="background:#ffffff;color:#1e293b;border:1px solid #cbd5e1;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">
@@ -677,6 +682,34 @@ async function handleSignIn(e) {
     }
     showToast('⚠️ Akun belum terdaftar! Silakan Sign Up terlebih dahulu atau Masuk dengan Google.');
     return;
+  }
+
+  // 2. Coba verifikasi API backend (opsional, dengan timeout 3 detik)
+  let apiSuccess = false;
+  let apiUserData = null;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch('api/login.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pass }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    const data = await res.json().catch(() => null);
+    if (res.ok && data && data.status === 'success') {
+      apiSuccess = true;
+      apiUserData = data.user;
+    }
+  } catch (err) {
+    // Mode offline / timeout — lanjutkan dengan localStorage
+  }
+
+  if (btnSubmit) {
+    btnSubmit.disabled = false;
+    btnSubmit.style.opacity = '1';
+    btnSubmit.textContent = 'Sign In';
   }
 
   // KONDISI B: Akun terdaftar tetapi kata sandi salah!
@@ -927,14 +960,15 @@ function handleSignUp(e) {
   // Cek apakah email sudah terdaftar sebelumnya
   const registeredUsers = getRegisteredUsers();
   if (registeredUsers.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-    const safeEmail = escapeHtml(email);
+    const safeEmail   = escapeHtml(email);
+    const safeEmailJs = escapeJsAttr(email); // aman untuk onclick attribute
     if (errorBox) {
       errorBox.className = 'auth-alert danger';
       errorBox.innerHTML = `
         <div style="width:100%;">
           <div style="font-weight:700;margin-bottom:3px;color:#991b1b;">⚠️ Email Sudah Terdaftar</div>
           <div style="font-size:12.5px;color:#7f1d1d;">Email <b>${safeEmail}</b> sudah terdaftar. Silakan langsung masuk pada tab Sign In.</div>
-          <button type="button" onclick="switchAuthTab('signin'); prefillSigninEmail('${safeEmail}');" style="margin-top:8px;background:#15803d;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
+          <button type="button" onclick="switchAuthTab('signin'); prefillSigninEmail('${safeEmailJs}');" style="margin-top:8px;background:#15803d;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
             Menuju Sign In
           </button>
         </div>
@@ -1152,30 +1186,36 @@ function closeOAuthModals() {
 
 // 6. Update Profil Pengguna yang Sedang Login
 function updateLoggedInUserProfile(name, email, avatarLetter, color, pictureUrl) {
+  // Escape semua string user sebelum masuk ke DOM
+  const safeName   = escapeHtml(name);
+  const safeColor  = /^#[0-9a-fA-F]{3,6}$/.test(color || '') ? color : '#15803d';
+  const safeLetter = escapeHtml(avatarLetter || (name ? name.charAt(0).toUpperCase() : '?'));
+
   // Update Navbar User Chip
-  const navUser = document.querySelector('.user-name-label');
+  const navUser   = document.querySelector('.user-name-label');
   const navAvatar = document.querySelector('.user-avatar-sm');
-  if (navUser) navUser.textContent = name;
+  if (navUser) navUser.textContent = name; // textContent aman
   if (navAvatar) {
-    if (pictureUrl) {
-      navAvatar.innerHTML = `<img src="${pictureUrl}" alt="${name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    if (pictureUrl && typeof pictureUrl === 'string' && pictureUrl.startsWith('data:image/')) {
+      // Hanya izinkan base64 data URI untuk gambar
+      navAvatar.innerHTML = `<img src="${pictureUrl}" alt="${safeName}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
     } else {
-      navAvatar.textContent = avatarLetter || name.charAt(0).toUpperCase();
-      if (color) navAvatar.style.background = color;
+      navAvatar.textContent = safeLetter;
+      if (safeColor) navAvatar.style.background = safeColor;
     }
   }
 
   // Update Profile Page Card
-  const profileName = document.querySelector('.user-display-name');
-  const profileEmail = document.querySelector('.user-display-email');
+  const profileName   = document.querySelector('.user-display-name');
+  const profileEmail  = document.querySelector('.user-display-email');
   const profileAvatar = document.querySelector('.avatar-round');
-  if (profileName) profileName.textContent = name;
-  if (profileEmail) profileEmail.textContent = email;
+  if (profileName)  profileName.textContent  = name;   // textContent aman
+  if (profileEmail) profileEmail.textContent = email;  // textContent aman
   if (profileAvatar) {
-    if (pictureUrl) {
-      profileAvatar.innerHTML = `<img src="${pictureUrl}" alt="${name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    if (pictureUrl && typeof pictureUrl === 'string' && pictureUrl.startsWith('data:image/')) {
+      profileAvatar.innerHTML = `<img src="${pictureUrl}" alt="${safeName}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
     } else {
-      profileAvatar.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${color || '#15803d'};color:#fff;font-size:32px;font-weight:800;">${avatarLetter || name.charAt(0).toUpperCase()}</div>`;
+      profileAvatar.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${safeColor};color:#fff;font-size:32px;font-weight:800;">${safeLetter}</div>`;
     }
   }
 }
@@ -1334,9 +1374,12 @@ function syncProfileUiDisplays() {
 
   // Avatar and Initials
   const initials = p.name ? p.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'FK';
+  const safePhotoSrc = (p.photo && typeof p.photo === 'string' && (p.photo.startsWith('data:image/') || p.photo.startsWith('https://'))) ? p.photo : null;
+  const safePName = escapeHtml(p.name || '');
+
   document.querySelectorAll('.user-avatar-sm').forEach(el => {
-    if (p.photo) {
-      el.innerHTML = `<img src="${p.photo}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    if (safePhotoSrc) {
+      el.innerHTML = `<img src="${safePhotoSrc}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     } else if (p.avatar && p.avatar !== 'default' && p.avatar !== '👤') {
       el.textContent = p.avatar;
       el.style.fontSize = '14px';
@@ -1348,10 +1391,10 @@ function syncProfileUiDisplays() {
 
   const avatarDisplay = document.getElementById('profile-avatar-display');
   if (avatarDisplay) {
-    if (p.photo) {
-      avatarDisplay.innerHTML = `<img src="${p.photo}" alt="Foto Profil ${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    if (safePhotoSrc) {
+      avatarDisplay.innerHTML = `<img src="${safePhotoSrc}" alt="Foto Profil ${safePName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     } else if (p.avatar && p.avatar !== 'default' && p.avatar !== '👤') {
-      avatarDisplay.innerHTML = `<span style="font-size:36px;line-height:1;">${p.avatar}</span>`;
+      avatarDisplay.innerHTML = `<span style="font-size:36px;line-height:1;">${escapeHtml(p.avatar)}</span>`;
     } else {
       avatarDisplay.innerHTML = `
         <svg width="56" height="56" viewBox="0 0 24 24" fill="#9ca3af">
@@ -1728,21 +1771,29 @@ function renderModalReports(filter = 'all') {
     const statusClass = isSelesai ? 'selesai' : (rep.status === 'proses' ? 'proses' : 'baru');
     const statusLabel = isSelesai ? 'SELESAI DITANGANI' : (rep.status === 'proses' ? 'SEDANG DITINDAKLANJUTI' : 'BARU DITERIMA');
 
+    // Escape semua data user sebelum masuk ke innerHTML — cegah XSS stored
+    const safeCategory = escapeHtml(rep.category || 'Laporan Kejadian');
+    const safeTitle    = escapeHtml(rep.title);
+    const safeDesc     = escapeHtml(rep.desc);
+    const safeLocation = escapeHtml(rep.location || 'Kota Kediri');
+    const safeOfficer  = escapeHtml(rep.officer || '');
+    const safeTime     = escapeHtml(rep.time || 'Baru saja');
+
     return `
       <div class="report-modal-item">
         <div class="rep-header-row">
-          <span class="rep-cat-badge">${rep.category || 'Laporan Kejadian'}</span>
+          <span class="rep-cat-badge">${safeCategory}</span>
           <span class="rep-status-pill ${statusClass}">${statusLabel}</span>
         </div>
-        <h4 class="rep-modal-title">${rep.title}</h4>
-        <p class="rep-modal-desc">${rep.desc}</p>
+        <h4 class="rep-modal-title">${safeTitle}</h4>
+        <p class="rep-modal-desc">${safeDesc}</p>
         <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#64748b;margin-bottom:8px;flex-wrap:wrap;">
           <span>📍</span>
-          <span>${rep.location || 'Kota Kediri'}</span>
-          ${rep.officer ? `<span style="margin-left:auto;color:#15803d;font-weight:600;">Petugas: ${rep.officer}</span>` : ''}
+          <span>${safeLocation}</span>
+          ${safeOfficer ? `<span style="margin-left:auto;color:#15803d;font-weight:600;">Petugas: ${safeOfficer}</span>` : ''}
         </div>
         <div class="rep-modal-meta">
-          <span>⏰ ${rep.time || 'Baru saja'}</span>
+          <span>⏰ ${safeTime}</span>
           <button type="button" class="rep-action-link" onclick="closeMyReportsModal(); switchWebTab('map'); showToast('🗺️ Membuka peta titik kejadian');">
             <span>Lihat di Peta &rarr;</span>
           </button>
@@ -3477,15 +3528,19 @@ function renderWebReportsStack() {
   if (hotlineNotice) hotlineNotice.style.display = 'none';
   if (hotlineBanner) {
     const latest = webState.reports[0];
+    // Escape semua data user — cegah XSS stored
+    const lTitle      = escapeHtml(latest.title);
+    const lDesc       = escapeHtml(latest.desc);
+    const lStatusText = escapeHtml(latest.statusText);
     hotlineBanner.style.display = 'block';
     hotlineBanner.innerHTML = `
       <div class="card-head-row">
-        <span class="report-title-bold">${latest.title}</span>
+        <span class="report-title-bold">${lTitle}</span>
         <span class="badge-diproses" style="${latest.status === 'selesai' ? 'background:#dcfce7;color:#15803d;' : latest.status === 'diproses' ? 'background:#fef08a;color:#854d0e;' : 'background:#dbeafe;color:#1e40af;'}">
-          ${latest.statusText}
+          ${lStatusText}
         </span>
       </div>
-      <div class="report-quote">"${latest.desc}"</div>
+      <div class="report-quote">"${lDesc}"</div>
       <div class="stepper-track">
         <div class="track-step">
           <div class="step-circle ${latest.step >= 1 ? 'green' : 'gray'}">✓</div>
@@ -3511,38 +3566,44 @@ function renderWebReportsStack() {
   }
 
   if (container) {
-    container.innerHTML = webState.reports.map(r => `
-      <div class="featured-stepper-card" style="margin-bottom:12px;">
-        <div class="card-head-row">
-          <span class="report-title-bold">${r.title}</span>
-          <span class="badge-diproses" style="${r.status === 'selesai' ? 'background:#dcfce7;color:#15803d;' : r.status === 'diproses' ? 'background:#fef08a;color:#854d0e;' : 'background:#dbeafe;color:#1e40af;'}">
-            ${r.statusText}
-          </span>
+    container.innerHTML = webState.reports.map(r => {
+      // Escape setiap field — cegah XSS stored dari input laporan
+      const rTitle      = escapeHtml(r.title);
+      const rDesc       = escapeHtml(r.desc);
+      const rStatusText = escapeHtml(r.statusText);
+      return `
+        <div class="featured-stepper-card" style="margin-bottom:12px;">
+          <div class="card-head-row">
+            <span class="report-title-bold">${rTitle}</span>
+            <span class="badge-diproses" style="${r.status === 'selesai' ? 'background:#dcfce7;color:#15803d;' : r.status === 'diproses' ? 'background:#fef08a;color:#854d0e;' : 'background:#dbeafe;color:#1e40af;'}">
+              ${rStatusText}
+            </span>
+          </div>
+          <div class="report-quote">"${rDesc}"</div>
+          <div class="stepper-track">
+            <div class="track-step">
+              <div class="step-circle ${r.step >= 1 ? 'green' : 'gray'}">✓</div>
+              <span class="step-lbl">Diterima</span>
+            </div>
+            <div class="track-line ${r.step >= 2 ? 'green' : ''}"></div>
+            <div class="track-step">
+              <div class="step-circle ${r.step >= 2 ? 'green' : 'gray'}">✓</div>
+              <span class="step-lbl">Diverifikasi</span>
+            </div>
+            <div class="track-line ${r.step >= 3 ? 'orange' : ''}"></div>
+            <div class="track-step">
+              <div class="step-circle ${r.step === 3 ? 'orange' : r.step > 3 ? 'green' : 'gray'}">${r.step >= 3 ? (r.step > 3 ? '✓' : '3') : '3'}</div>
+              <span class="step-lbl">Diproses</span>
+            </div>
+            <div class="track-line ${r.step >= 4 ? 'green' : ''}"></div>
+            <div class="track-step">
+              <div class="step-circle ${r.step >= 4 ? 'green' : 'gray'}">4</div>
+              <span class="step-lbl">Selesai</span>
+            </div>
+          </div>
         </div>
-        <div class="report-quote">"${r.desc}"</div>
-        <div class="stepper-track">
-          <div class="track-step">
-            <div class="step-circle ${r.step >= 1 ? 'green' : 'gray'}">✓</div>
-            <span class="step-lbl">Diterima</span>
-          </div>
-          <div class="track-line ${r.step >= 2 ? 'green' : ''}"></div>
-          <div class="track-step">
-            <div class="step-circle ${r.step >= 2 ? 'green' : 'gray'}">✓</div>
-            <span class="step-lbl">Diverifikasi</span>
-          </div>
-          <div class="track-line ${r.step >= 3 ? 'orange' : ''}"></div>
-          <div class="track-step">
-            <div class="step-circle ${r.step === 3 ? 'orange' : r.step > 3 ? 'green' : 'gray'}">${r.step >= 3 ? (r.step > 3 ? '✓' : '3') : '3'}</div>
-            <span class="step-lbl">Diproses</span>
-          </div>
-          <div class="track-line ${r.step >= 4 ? 'green' : ''}"></div>
-          <div class="track-step">
-            <div class="step-circle ${r.step >= 4 ? 'green' : 'gray'}">4</div>
-            <span class="step-lbl">Selesai</span>
-          </div>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 }
 
@@ -3693,31 +3754,47 @@ function renderNotifications(category = 'all') {
     return;
   }
 
-  listEl.innerHTML = filtered.map(item => `
-    <div class="notif-item ${item.unread ? 'unread' : ''}" onclick="handleNotificationClick('${item.id}')">
-      <div class="notif-item-icon" style="background:${item.iconBg};">
-        ${item.icon}
+  listEl.innerHTML = filtered.map(item => {
+    // Escape semua field teks — data bisa datang dari API BMKG/BPBD eksternal
+    const safeId          = escapeJsAttr(String(item.id || ''));
+    const safeLabel       = escapeHtml(item.categoryLabel || '');
+    const safeTime        = escapeHtml(item.time || '');
+    const safeTitle       = escapeHtml(item.title || '');
+    const safeDesc        = escapeHtml(item.desc || '');
+    const safeActionLabel = escapeHtml(item.actionLabel || '');
+    // Warna & bg hanya izinkan hex/named CSS colors
+    const safeBadgeColor  = /^#[0-9a-fA-F]{3,6}$/.test(item.badgeColor || '') ? item.badgeColor : '#dc2626';
+    const safeBadgeBg     = /^#[0-9a-fA-F]{3,6}$/.test(item.badgeBg    || '') ? item.badgeBg    : '#fee2e2';
+    const safeIconBg      = /^#[0-9a-fA-F]{3,6}$/.test(item.iconBg     || '') ? item.iconBg     : '#fee2e2';
+    // Icon hanya izinkan emoji / teks pendek (hapus tag HTML)
+    const safeIcon        = escapeHtml(item.icon || '');
+
+    return `
+    <div class="notif-item ${item.unread ? 'unread' : ''}" onclick="handleNotificationClick('${safeId}')">
+      <div class="notif-item-icon" style="background:${safeIconBg};">
+        ${safeIcon}
       </div>
       <div class="notif-item-content">
         <div class="notif-item-top">
           <div>
-            <span class="notif-badge-tag" style="color:${item.badgeColor};background:${item.badgeBg};">${item.categoryLabel}</span>
+            <span class="notif-badge-tag" style="color:${safeBadgeColor};background:${safeBadgeBg};">${safeLabel}</span>
             ${item.isGovernment ? '<span class="notif-gov-tag">✓ RESMI</span>' : ''}
           </div>
-          <span class="notif-time-text">${item.time}</span>
+          <span class="notif-time-text">${safeTime}</span>
         </div>
-        <h4 class="notif-item-title">${item.title}</h4>
-        <p class="notif-item-desc">${item.desc}</p>
-        ${item.actionLabel ? `
-          <button type="button" class="notif-action-pill" onclick="event.stopPropagation(); executeNotificationAction('${item.id}')">
-            <span>${item.actionLabel}</span>
+        <h4 class="notif-item-title">${safeTitle}</h4>
+        <p class="notif-item-desc">${safeDesc}</p>
+        ${safeActionLabel ? `
+          <button type="button" class="notif-action-pill" onclick="event.stopPropagation(); executeNotificationAction('${safeId}')">
+            <span>${safeActionLabel}</span>
             <span style="font-size:12px;">&rarr;</span>
           </button>
         ` : ''}
       </div>
       ${item.unread ? '<span class="notif-unread-dot" title="Belum dibaca"></span>' : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function filterNotificationCategory(category, chipEl) {
@@ -3779,18 +3856,18 @@ function executeNotificationAction(notifId) {
       webState.map.setView([notif.latitude, notif.longitude], 13, { animate: true });
       const popupHtml = `
         <div style="font-family:Inter,sans-serif;padding:6px 4px;max-width:260px;">
-          <div style="font-size:10px;font-weight:800;color:${notif.badgeColor || '#dc2626'};margin-bottom:3px;">
-            ⚠️ ${notif.categoryLabel || 'PERINGATAN BAHAYA'}
+          <div style="font-size:10px;font-weight:800;color:${/^#[0-9a-fA-F]{3,6}$/.test(notif.badgeColor || '') ? notif.badgeColor : '#dc2626'};margin-bottom:3px;">
+            ⚠️ ${escapeHtml(notif.categoryLabel || 'PERINGATAN BAHAYA')}
           </div>
           <div style="font-size:12.5px;font-weight:700;color:#0f172a;line-height:1.3;margin-bottom:4px;">
-            ${notif.title}
+            ${escapeHtml(notif.title)}
           </div>
           <div style="font-size:11px;color:#475569;line-height:1.35;">
-            ${notif.desc}
+            ${escapeHtml(notif.desc)}
           </div>
-          ${notif.shakemap ? `
+          ${notif.shakemap && sanitizeUrl(notif.shakemap) !== '#' ? `
             <div style="margin-top:8px;">
-              <a href="${notif.shakemap}" target="_blank" style="font-size:11px;color:#2563eb;font-weight:700;text-decoration:none;">
+              <a href="${sanitizeUrl(notif.shakemap)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#2563eb;font-weight:700;text-decoration:none;">
                 🗺️ Buka Peta Guncangan BMKG &rarr;
               </a>
             </div>
@@ -3806,9 +3883,12 @@ function executeNotificationAction(notifId) {
     return;
   }
 
-  // 2. Jika tautan eksternal (misal Radar BMKG / Shakemap)
+  // 2. Jika tautan eksternal (misal Radar BMKG / Shakemap) — hanya izinkan http/https
   if (notif.actionUrl) {
-    window.open(notif.actionUrl, '_blank');
+    const safeActionUrl = sanitizeUrl(notif.actionUrl);
+    if (safeActionUrl !== '#') {
+      window.open(safeActionUrl, '_blank', 'noopener,noreferrer');
+    }
     return;
   }
 
@@ -3862,20 +3942,20 @@ async function syncGovernmentAlertsNow(isManual = false) {
           id: 'bmkg-live-' + (gempa.DateTime || Date.now()),
           source: 'BMKG RI',
           category: 'darurat',
-          categoryLabel: `RESMI BMKG • GEMPA M ${gempa.Magnitude}`,
+          categoryLabel: `RESMI BMKG • GEMPA M ${escapeHtml(String(gempa.Magnitude || '?'))}`,
           badgeColor: '#991b1b',
           badgeBg: '#fee2e2',
           icon: '🌐',
           iconBg: '#fee2e2',
-          title: `Gempa Terkini M ${gempa.Magnitude} - ${gempa.Wilayah}`,
-          desc: `Kedalaman ${gempa.Kedalaman} | ${gempa.Potensi}. ${gempa.Dirasakan ? 'Dirasakan: ' + gempa.Dirasakan : ''}`,
-          location: gempa.Wilayah,
-          time: `${gempa.Jam} (${gempa.Tanggal})`,
+          title: `Gempa Terkini M ${escapeHtml(String(gempa.Magnitude || '?'))} - ${escapeHtml(String(gempa.Wilayah || ''))}`,
+          desc: `Kedalaman ${escapeHtml(String(gempa.Kedalaman || ''))} | ${escapeHtml(String(gempa.Potensi || ''))}. ${gempa.Dirasakan ? 'Dirasakan: ' + escapeHtml(String(gempa.Dirasakan)) : ''}`,
+          location: escapeHtml(String(gempa.Wilayah || 'Indonesia')),
+          time: `${escapeHtml(String(gempa.Jam || ''))} (${escapeHtml(String(gempa.Tanggal || ''))})`,
           unread: true,
           isGovernment: true,
           latitude: lat,
           longitude: lng,
-          shakemap: gempa.Shakemap ? `https://data.bmkg.go.id/DataMKG/TEWS/${gempa.Shakemap}` : null,
+          shakemap: gempa.Shakemap ? sanitizeUrl(`https://data.bmkg.go.id/DataMKG/TEWS/${encodeURIComponent(gempa.Shakemap.replace(/^.*\//, ''))}`) : null,
           actionLabel: 'Pusatkan Titik Gempa',
           actionType: 'gempa'
         });
@@ -3920,10 +4000,11 @@ async function syncGovernmentAlertsNow(isManual = false) {
     console.warn('BMKG Weather fetch failed:', wErr);
   }
 
-  // 4. Custom BPBD Endpoint (jika dimasukkan oleh pengguna dengan API Key)
-  if (bpbdCustomEndpoint) {
+  // 4. Custom BPBD Endpoint — validasi URL sebelum fetch (cegah SSRF)
+  const safeBpbdEndpoint = sanitizeUrl(bpbdCustomEndpoint);
+  if (safeBpbdEndpoint && safeBpbdEndpoint !== '#') {
     try {
-      const bpbdResp = await fetch(bpbdCustomEndpoint, {
+      const bpbdResp = await fetch(safeBpbdEndpoint, {
         headers: {
           'Authorization': `Bearer ${bpbdApiKey}`,
           'x-api-key': bpbdApiKey
@@ -3934,23 +4015,27 @@ async function syncGovernmentAlertsNow(isManual = false) {
         const alerts = bpbdJson.data || bpbdJson.alerts || bpbdJson;
         if (Array.isArray(alerts)) {
           alerts.forEach((item, idx) => {
+            // Sanitasi semua field dari API eksternal
+            const safeItemId  = escapeJsAttr(String(item.id || idx));
+            const lat = (typeof item.latitude  === 'number') ? item.latitude  : null;
+            const lng = (typeof item.longitude === 'number') ? item.longitude : null;
             newGovAlerts.push({
-              id: 'custom-bpbd-' + (item.id || idx),
-              source: item.source || 'BPBD Kota Kediri',
+              id: 'custom-bpbd-' + safeItemId,
+              source: escapeHtml(String(item.source || 'BPBD Kota Kediri')),
               category: 'darurat',
               categoryLabel: 'RESMI BPBD KEDIRI',
               badgeColor: '#dc2626',
               badgeBg: '#fee2e2',
               icon: '🚨',
               iconBg: '#fee2e2',
-              title: item.title || item.judul || 'Peringatan Darurat BPBD',
-              desc: item.desc || item.deskripsi || '',
-              location: item.location || 'Kota Kediri',
+              title: escapeHtml(String(item.title || item.judul || 'Peringatan Darurat BPBD')),
+              desc: escapeHtml(String(item.desc || item.deskripsi || '')),
+              location: escapeHtml(String(item.location || 'Kota Kediri')),
               time: 'Baru saja',
               unread: true,
               isGovernment: true,
-              latitude: item.latitude || null,
-              longitude: item.longitude || null,
+              latitude: lat,
+              longitude: lng,
               actionLabel: 'Lihat Posko BPBD'
             });
           });

@@ -1,10 +1,12 @@
 <?php
 // ========================================================
 // KEDIRI SAFE MAP - USER LOGIN API
-// Endpoint Autentikasi Pengguna
+// Endpoint Autentikasi Pengguna (Anti SQL Injection)
 // ========================================================
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/security.php';
+
 if (PHP_SAPI !== 'cli') {
     header('Content-Type: application/json; charset=utf-8');
 }
@@ -12,34 +14,40 @@ if (PHP_SAPI !== 'cli') {
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 if ($method !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Hanya metode POST yang diizinkan']);
-    exit;
+    jsonError(405, 'Hanya metode POST yang diizinkan');
 }
 
-$raw = file_get_contents('php://input');
+// Rate limit: max 10 percobaan login per IP per menit
+rateLimit('login', 10, 60);
+
+$raw     = file_get_contents('php://input');
 $payload = json_decode($raw, true);
 
-if (!$payload) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Format payload tidak valid']);
-    exit;
+if (!is_array($payload)) {
+    jsonError(400, 'Format payload tidak valid');
 }
 
+// ---- Ambil & validasi input ----
 $email = trim($payload['email'] ?? '');
-$pass = trim($payload['password'] ?? '');
+$pass  = trim($payload['password'] ?? '');
 
 if (empty($email) || empty($pass)) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Email dan kata sandi wajib diisi']);
-    exit;
+    jsonError(400, 'Email dan kata sandi wajib diisi');
 }
 
+if (!validateEmail($email)) {
+    jsonError(422, 'Format email tidak valid', 'email');
+}
+
+if (!validatePassword($pass)) {
+    jsonError(422, 'Kata sandi minimal 6 karakter', 'password');
+}
+
+// ---- Mode offline / fallback (tanpa DB) ----
 if (!$pdo) {
-    // Mode offline / fallback
     $seedUsers = [
         ['id' => 1, 'nama' => 'Administrator', 'email' => 'admin@kediri.go.id', 'password' => 'admin123', 'role' => 'admin'],
-        ['id' => 2, 'nama' => 'Budi Warga', 'email' => 'budi@gmail.com', 'password' => 'budi123', 'role' => 'user']
+        ['id' => 2, 'nama' => 'Budi Warga',    'email' => 'budi@gmail.com',     'password' => 'budi123',  'role' => 'user']
     ];
     $found = null;
     foreach ($seedUsers as $u) {
@@ -49,51 +57,61 @@ if (!$pdo) {
         }
     }
     if (!$found) {
-        http_response_code(404);
-        echo json_encode(['status' => 'not_found', 'message' => 'Akun belum terdaftar. Silakan Sign Up terlebih dahulu atau Masuk dengan Google.']);
-        exit;
+        jsonError(404, 'Akun belum terdaftar. Silakan Sign Up terlebih dahulu.');
     }
-    if ($found['password'] !== $pass) {
-        http_response_code(401);
-        echo json_encode(['status' => 'wrong_password', 'message' => 'Kata sandi tidak sesuai. Silakan periksa kembali.']);
-        exit;
+    if (!verifyPassword($pass, $found['password'])) {
+        jsonError(401, 'Kata sandi tidak sesuai. Silakan periksa kembali.');
     }
-    echo json_encode(['status' => 'success', 'user' => $found]);
+    unset($found['password']);
+    echo json_encode(['status' => 'success', 'user' => $found], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
+// ---- Query dengan Prepared Statement (100% safe dari SQL Injection) ----
 try {
-    $stmt = $pdo->prepare("SELECT id, nama, email, password, role, foto_face, face_verified, face_token FROM users WHERE email = ?");
-    $stmt->execute([$email]);
+    $stmt = $pdo->prepare(
+        "SELECT id, nama, email, password, role, foto_face, face_verified, face_token
+         FROM users
+         WHERE email = ?
+         LIMIT 1"
+    );
+    $stmt->execute([$email]); // email sudah divalidasi format, PDO binding cegah injection
     $user = $stmt->fetch();
 
     if (!$user) {
-        http_response_code(404);
-        echo json_encode(['status' => 'not_found', 'message' => 'Akun belum terdaftar. Silakan Sign Up terlebih dahulu atau Masuk dengan Google.']);
-        exit;
+        jsonError(404, 'Akun belum terdaftar. Silakan Sign Up terlebih dahulu atau Masuk dengan Google.');
     }
 
-    $passHash = md5($pass);
-    if ($user['password'] !== $pass && $user['password'] !== $passHash) {
-        http_response_code(401);
-        echo json_encode(['status' => 'wrong_password', 'message' => 'Kata sandi salah. Silakan periksa kembali kata sandi Anda.']);
-        exit;
+    if (!verifyPassword($pass, $user['password'])) {
+        jsonError(401, 'Kata sandi salah. Silakan periksa kembali kata sandi Anda.');
     }
+
+    // Upgrade password lama (MD5/plain) ke bcrypt secara otomatis
+    if (!str_starts_with($user['password'], '$2')) {
+        $newHash = hashPassword($pass);
+        $upd = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
+        $upd->execute([$newHash, $user['id']]);
+    }
+
+    // Jangan kirim hash password ke client
+    unset($user['password']);
 
     echo json_encode([
-        'status' => 'success',
+        'status'  => 'success',
         'message' => 'Login berhasil.',
-        'user' => [
-            'id' => $user['id'],
-            'nama' => $user['nama'],
-            'email' => $user['email'],
-            'role' => $user['role'],
-            'foto_face' => $user['foto_face'],
-            'face_verified' => (bool)$user['face_verified'],
-            'face_token' => $user['face_token']
+        'user'    => [
+            'id'           => (int)$user['id'],
+            'nama'         => $user['nama'],
+            'email'        => $user['email'],
+            'role'         => $user['role'],
+            'foto_face'    => $user['foto_face'],
+            'face_verified'=> (bool)$user['face_verified'],
+            'face_token'   => $user['face_token']
         ]
-    ]);
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => 'Kesalahan server: ' . $e->getMessage()]);
+    ], JSON_UNESCAPED_UNICODE);
+
+} catch (PDOException $e) {
+    // Jangan expose detail error ke client
+    error_log('[KSM Login Error] ' . $e->getMessage());
+    jsonError(500, 'Kesalahan server. Silakan coba lagi.');
 }
