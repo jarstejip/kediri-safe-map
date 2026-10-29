@@ -1236,9 +1236,14 @@ function loadStoredProfileData() {
       try {
         const parsed = JSON.parse(storedReports);
         // Hapus laporan mock / dummy agar riwayat murni kosong jika belum ada laporan nyata buatan warga
-        const mockTitles = ['Pohon Tumbang Menutup Jalan Brawijaya', 'Lampu Penerangan Jalan Umum Padam', 'Genangan Air di Simpang Dhoho'];
+        const mockKeywords = ['pohon tumbang', 'lampu penerangan', 'lampu jalan', 'genangan air', 'simpang dhoho', 'brawijaya'];
         webState.reports = Array.isArray(parsed)
-          ? parsed.filter(r => r.id !== 1 && r.id !== 2 && r.id !== 3 && r.id !== 1714001 && r.id !== 1714002 && !mockTitles.some(t => (r.title || '').includes(t)))
+          ? parsed.filter(r => {
+              if (r.id === 1 || r.id === 2 || r.id === 3 || r.id === 1714001 || r.id === 1714002) return false;
+              const titleLow = (r.title || '').toLowerCase();
+              if (mockKeywords.some(kw => titleLow.includes(kw))) return false;
+              return true;
+            })
           : [];
       } catch (err) {
         webState.reports = [];
@@ -1964,11 +1969,6 @@ function updateFacilitiesWithLiveLocation(lat, lng) {
 
   // 5. Cari fasilitas kesehatan tambahan via OpenStreetMap di sekitar lokasi user
   fetchLiveNearbyFromOSM(lat, lng);
-
-  // 6. Perbarui marker peta sesuai filter aktif
-  const activePill = document.querySelector('.filter-pill.active');
-  const type = activePill ? activePill.id.replace('pill-', '') : 'all';
-  renderWebFacilities(type);
 }
 
 // Render dinamis kartu fasilitas terdekat
@@ -2380,14 +2380,6 @@ function initWebMap() {
 
   renderWebFacilities('all');
   renderDrawerFacilityCards();
-
-  // Auto-update fasilitas terdekat saat peta digeser ke lokasi tertentu
-  webState.map.on('moveend', () => {
-    const center = webState.map.getCenter();
-    if (center) {
-      updateFacilitiesWithLiveLocation(center.lat, center.lng);
-    }
-  });
 }
 
 function renderWebFacilities(filter) {
@@ -2440,9 +2432,13 @@ function renderWebFacilities(filter) {
             </a>
           </div>
         </div>
-      `);
+      `, {
+        closeOnClick: false,
+        autoPan: true
+      });
 
     marker.facilityId = item.id;
+    item.marker = marker;
     webState.mapMarkers.push(marker);
   });
 }
@@ -2672,18 +2668,27 @@ function focusFacilityOnMap(facilityId) {
   if (!facility || !webState.map) return;
 
   // Fly to target
-  webState.map.flyTo([facility.lat, facility.lng], 16, { duration: 1 });
+  webState.map.flyTo([facility.lat, facility.lng], 16.5, { duration: 0.8 });
   showToast(`Memusatkan peta ke: ${facility.name}`);
 
-  // Find corresponding marker & open popup
+  // Find corresponding marker & open popup reliably
   setTimeout(() => {
-    webState.mapMarkers.forEach(marker => {
-      const pos = marker.getLatLng();
-      if (Math.abs(pos.lat - facility.lat) < 0.0001 && Math.abs(pos.lng - facility.lng) < 0.0001) {
-        marker.openPopup();
-      }
-    });
-  }, 1000);
+    if (facility.marker && typeof facility.marker.openPopup === 'function') {
+      facility.marker.openPopup();
+      return;
+    }
+    const targetMarker = webState.mapMarkers.find(m => m.facilityId === facilityId);
+    if (targetMarker) {
+      targetMarker.openPopup();
+    } else {
+      webState.mapMarkers.forEach(marker => {
+        const pos = marker.getLatLng();
+        if (Math.abs(pos.lat - facility.lat) < 0.0001 && Math.abs(pos.lng - facility.lng) < 0.0001) {
+          marker.openPopup();
+        }
+      });
+    }
+  }, 850);
 }
 
 function fitAllFacilitiesOnMap() {
@@ -4070,8 +4075,12 @@ async function syncDatabaseReports() {
     if (res.ok) {
       const json = await res.json();
       if (json && json.status === 'success' && Array.isArray(json.data)) {
-        const mockTitles = ['Pohon Tumbang Menutup Jalan Brawijaya', 'Lampu Penerangan Jalan Umum Padam', 'Genangan Air di Simpang Dhoho'];
-        const validDbReports = json.data.filter(r => r.id !== 1 && r.id !== 2 && r.id !== 3 && !mockTitles.some(t => (r.title || '').includes(t)));
+        const mockKeywords = ['pohon tumbang', 'lampu penerangan', 'lampu jalan', 'genangan air', 'simpang dhoho', 'brawijaya'];
+        const validDbReports = json.data.filter(r => {
+          if (r.id === 1 || r.id === 2 || r.id === 3 || r.id === 1714001 || r.id === 1714002) return false;
+          const titleLow = (r.title || '').toLowerCase();
+          return !mockKeywords.some(kw => titleLow.includes(kw));
+        });
         if (validDbReports.length > 0) {
           const localIds = new Set(webState.reports.map(r => r.id));
           validDbReports.forEach(dbRep => {

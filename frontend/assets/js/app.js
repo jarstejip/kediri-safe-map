@@ -960,15 +960,14 @@ function handleSignUp(e) {
   // Cek apakah email sudah terdaftar sebelumnya
   const registeredUsers = getRegisteredUsers();
   if (registeredUsers.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-    const safeEmail   = escapeHtml(email);
-    const safeEmailJs = escapeJsAttr(email); // aman untuk onclick attribute
+    const safeEmail = escapeHtml(email);
     if (errorBox) {
       errorBox.className = 'auth-alert danger';
       errorBox.innerHTML = `
         <div style="width:100%;">
           <div style="font-weight:700;margin-bottom:3px;color:#991b1b;">⚠️ Email Sudah Terdaftar</div>
           <div style="font-size:12.5px;color:#7f1d1d;">Email <b>${safeEmail}</b> sudah terdaftar. Silakan langsung masuk pada tab Sign In.</div>
-          <button type="button" onclick="switchAuthTab('signin'); prefillSigninEmail('${safeEmailJs}');" style="margin-top:8px;background:#15803d;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
+          <button type="button" onclick="switchAuthTab('signin'); prefillSigninEmail('${escapeJsAttr(email)}');" style="margin-top:8px;background:#15803d;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
             Menuju Sign In
           </button>
         </div>
@@ -1237,9 +1236,14 @@ function loadStoredProfileData() {
       try {
         const parsed = JSON.parse(storedReports);
         // Hapus laporan mock / dummy agar riwayat murni kosong jika belum ada laporan nyata buatan warga
-        const mockTitles = ['Pohon Tumbang Menutup Jalan Brawijaya', 'Lampu Penerangan Jalan Umum Padam', 'Genangan Air di Simpang Dhoho'];
+        const mockKeywords = ['pohon tumbang', 'lampu penerangan', 'lampu jalan', 'genangan air', 'simpang dhoho', 'brawijaya'];
         webState.reports = Array.isArray(parsed)
-          ? parsed.filter(r => r.id !== 1 && r.id !== 2 && r.id !== 3 && r.id !== 1714001 && r.id !== 1714002 && !mockTitles.some(t => (r.title || '').includes(t)))
+          ? parsed.filter(r => {
+              if (r.id === 1 || r.id === 2 || r.id === 3 || r.id === 1714001 || r.id === 1714002) return false;
+              const titleLow = (r.title || '').toLowerCase();
+              if (mockKeywords.some(kw => titleLow.includes(kw))) return false;
+              return true;
+            })
           : [];
       } catch (err) {
         webState.reports = [];
@@ -1350,12 +1354,9 @@ function syncProfileUiDisplays() {
 
   // Avatar and Initials
   const initials = p.name ? p.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'FK';
-  const safePhotoSrc = (p.photo && typeof p.photo === 'string' && (p.photo.startsWith('data:image/') || p.photo.startsWith('https://'))) ? p.photo : null;
-  const safePName = escapeHtml(p.name || '');
-
   document.querySelectorAll('.user-avatar-sm').forEach(el => {
-    if (safePhotoSrc) {
-      el.innerHTML = `<img src="${safePhotoSrc}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    if (p.photo && typeof p.photo === 'string' && p.photo.startsWith('data:image/')) {
+      el.innerHTML = `<img src="${p.photo}" alt="${escapeHtml(p.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     } else if (p.avatar && p.avatar !== 'default' && p.avatar !== '👤') {
       el.textContent = p.avatar;
       el.style.fontSize = '14px';
@@ -1367,8 +1368,8 @@ function syncProfileUiDisplays() {
 
   const avatarDisplay = document.getElementById('profile-avatar-display');
   if (avatarDisplay) {
-    if (safePhotoSrc) {
-      avatarDisplay.innerHTML = `<img src="${safePhotoSrc}" alt="Foto Profil ${safePName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    if (p.photo && typeof p.photo === 'string' && p.photo.startsWith('data:image/')) {
+      avatarDisplay.innerHTML = `<img src="${p.photo}" alt="${escapeHtml(p.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     } else if (p.avatar && p.avatar !== 'default' && p.avatar !== '👤') {
       avatarDisplay.innerHTML = `<span style="font-size:36px;line-height:1;">${escapeHtml(p.avatar)}</span>`;
     } else {
@@ -1968,11 +1969,6 @@ function updateFacilitiesWithLiveLocation(lat, lng) {
 
   // 5. Cari fasilitas kesehatan tambahan via OpenStreetMap di sekitar lokasi user
   fetchLiveNearbyFromOSM(lat, lng);
-
-  // 6. Perbarui marker peta sesuai filter aktif
-  const activePill = document.querySelector('.filter-pill.active');
-  const type = activePill ? activePill.id.replace('pill-', '') : 'all';
-  renderWebFacilities(type);
 }
 
 // Render dinamis kartu fasilitas terdekat
@@ -2384,14 +2380,6 @@ function initWebMap() {
 
   renderWebFacilities('all');
   renderDrawerFacilityCards();
-
-  // Auto-update fasilitas terdekat saat peta digeser ke lokasi tertentu
-  webState.map.on('moveend', () => {
-    const center = webState.map.getCenter();
-    if (center) {
-      updateFacilitiesWithLiveLocation(center.lat, center.lng);
-    }
-  });
 }
 
 function renderWebFacilities(filter) {
@@ -2444,9 +2432,13 @@ function renderWebFacilities(filter) {
             </a>
           </div>
         </div>
-      `);
+      `, {
+        closeOnClick: false,
+        autoPan: true
+      });
 
     marker.facilityId = item.id;
+    item.marker = marker;
     webState.mapMarkers.push(marker);
   });
 }
@@ -2676,18 +2668,27 @@ function focusFacilityOnMap(facilityId) {
   if (!facility || !webState.map) return;
 
   // Fly to target
-  webState.map.flyTo([facility.lat, facility.lng], 16, { duration: 1 });
+  webState.map.flyTo([facility.lat, facility.lng], 16.5, { duration: 0.8 });
   showToast(`Memusatkan peta ke: ${facility.name}`);
 
-  // Find corresponding marker & open popup
+  // Find corresponding marker & open popup reliably
   setTimeout(() => {
-    webState.mapMarkers.forEach(marker => {
-      const pos = marker.getLatLng();
-      if (Math.abs(pos.lat - facility.lat) < 0.0001 && Math.abs(pos.lng - facility.lng) < 0.0001) {
-        marker.openPopup();
-      }
-    });
-  }, 1000);
+    if (facility.marker && typeof facility.marker.openPopup === 'function') {
+      facility.marker.openPopup();
+      return;
+    }
+    const targetMarker = webState.mapMarkers.find(m => m.facilityId === facilityId);
+    if (targetMarker) {
+      targetMarker.openPopup();
+    } else {
+      webState.mapMarkers.forEach(marker => {
+        const pos = marker.getLatLng();
+        if (Math.abs(pos.lat - facility.lat) < 0.0001 && Math.abs(pos.lng - facility.lng) < 0.0001) {
+          marker.openPopup();
+        }
+      });
+    }
+  }, 850);
 }
 
 function fitAllFacilitiesOnMap() {
@@ -3412,10 +3413,27 @@ function handleReportSubmit(e) {
     return;
   }
 
+  // Validasi panjang input — cegah abuse
+  if (loc.length > 200) {
+    showToast('⚠️ Lokasi terlalu panjang (maks 200 karakter)');
+    return;
+  }
+  if (desc.length > 2000) {
+    showToast('⚠️ Keterangan terlalu panjang (maks 2000 karakter)');
+    return;
+  }
+
+  // Whitelist kategori yang valid (dari dropdown)
+  const allowedCategories = [
+    'Kerusakan Jalan', 'Lampu Jalan Mati', 'Genangan Air & Banjir',
+    'Pohon Tumbang', 'Kecelakaan Lalu Lintas', 'Darurat Medis'
+  ];
+  const safeCat = allowedCategories.includes(cat) ? cat : 'Laporan Kejadian';
+
   const newReport = {
     id: Date.now(),
-    title: `${cat} di ${loc}`,
-    category: cat,
+    title: `${safeCat} di ${loc}`,
+    category: safeCat,
     location: loc,
     desc: desc,
     status: 'diterima',
@@ -3430,13 +3448,13 @@ function handleReportSubmit(e) {
     localStorage.setItem('kediri_safe_reports', JSON.stringify(webState.reports));
   } catch (err) {}
 
-  // Simpan juga ke Database MySQL Laragon (tabel reports & report_status_history)
+  // Simpan juga ke Database MySQL (data sudah divalidasi di backend juga)
   fetch('api/reports.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      category: cat,
-      title: `${cat} di ${loc}`,
+      category: safeCat,
+      title: `${safeCat} di ${loc}`,
       location: loc,
       desc: desc,
       latitude: webState.userLocation?.lat || -7.8190,
@@ -3731,19 +3749,18 @@ function renderNotifications(category = 'all') {
   }
 
   listEl.innerHTML = filtered.map(item => {
-    // Escape semua field teks — data bisa datang dari API BMKG/BPBD eksternal
-    const safeId          = escapeJsAttr(String(item.id || ''));
-    const safeLabel       = escapeHtml(item.categoryLabel || '');
-    const safeTime        = escapeHtml(item.time || '');
-    const safeTitle       = escapeHtml(item.title || '');
-    const safeDesc        = escapeHtml(item.desc || '');
-    const safeActionLabel = escapeHtml(item.actionLabel || '');
-    // Warna & bg hanya izinkan hex/named CSS colors
-    const safeBadgeColor  = /^#[0-9a-fA-F]{3,6}$/.test(item.badgeColor || '') ? item.badgeColor : '#dc2626';
-    const safeBadgeBg     = /^#[0-9a-fA-F]{3,6}$/.test(item.badgeBg    || '') ? item.badgeBg    : '#fee2e2';
-    const safeIconBg      = /^#[0-9a-fA-F]{3,6}$/.test(item.iconBg     || '') ? item.iconBg     : '#fee2e2';
-    // Icon hanya izinkan emoji / teks pendek (hapus tag HTML)
-    const safeIcon        = escapeHtml(item.icon || '');
+    // Escape semua data sebelum masuk ke innerHTML — cegah XSS dari API/data
+    const safeId          = escapeJsAttr(item.id);
+    const safeIcon        = escapeHtml(item.icon);
+    const safeCatLabel    = escapeHtml(item.categoryLabel);
+    const safeTitle       = escapeHtml(item.title);
+    const safeDesc        = escapeHtml(item.desc);
+    const safeTime        = escapeHtml(item.time);
+    const safeActionLabel = escapeHtml(item.actionLabel);
+    // Warna hanya izinkan format hex/rgb
+    const safeBadgeColor  = /^(#[0-9a-fA-F]{3,6}|rgb\(\d+,\s*\d+,\s*\d+\))$/.test(item.badgeColor || '') ? item.badgeColor : '#dc2626';
+    const safeBadgeBg     = /^(#[0-9a-fA-F]{3,6}|rgb\(\d+,\s*\d+,\s*\d+\))$/.test(item.badgeBg || '') ? item.badgeBg : '#fee2e2';
+    const safeIconBg      = /^(#[0-9a-fA-F]{3,6}|rgb\(\d+,\s*\d+,\s*\d+\))$/.test(item.iconBg || '') ? item.iconBg : '#fee2e2';
 
     return `
     <div class="notif-item ${item.unread ? 'unread' : ''}" onclick="handleNotificationClick('${safeId}')">
@@ -3753,7 +3770,7 @@ function renderNotifications(category = 'all') {
       <div class="notif-item-content">
         <div class="notif-item-top">
           <div>
-            <span class="notif-badge-tag" style="color:${safeBadgeColor};background:${safeBadgeBg};">${safeLabel}</span>
+            <span class="notif-badge-tag" style="color:${safeBadgeColor};background:${safeBadgeBg};">${safeCatLabel}</span>
             ${item.isGovernment ? '<span class="notif-gov-tag">✓ RESMI</span>' : ''}
           </div>
           <span class="notif-time-text">${safeTime}</span>
@@ -3859,11 +3876,11 @@ function executeNotificationAction(notifId) {
     return;
   }
 
-  // 2. Jika tautan eksternal (misal Radar BMKG / Shakemap) — hanya izinkan http/https
+  // 2. Jika tautan eksternal (misal Radar BMKG / Shakemap) — validasi URL dulu
   if (notif.actionUrl) {
-    const safeActionUrl = sanitizeUrl(notif.actionUrl);
-    if (safeActionUrl !== '#') {
-      window.open(safeActionUrl, '_blank', 'noopener,noreferrer');
+    const safeUrl = sanitizeUrl(notif.actionUrl);
+    if (safeUrl !== '#') {
+      window.open(safeUrl, '_blank', 'noopener,noreferrer');
     }
     return;
   }
@@ -3976,45 +3993,47 @@ async function syncGovernmentAlertsNow(isManual = false) {
     console.warn('BMKG Weather fetch failed:', wErr);
   }
 
-  // 4. Custom BPBD Endpoint — validasi URL sebelum fetch (cegah SSRF)
-  const safeBpbdEndpoint = sanitizeUrl(bpbdCustomEndpoint);
-  if (safeBpbdEndpoint && safeBpbdEndpoint !== '#') {
+  // 4. Custom BPBD Endpoint (jika dimasukkan oleh pengguna dengan API Key)
+  // Validasi URL — hanya izinkan https
+  if (bpbdCustomEndpoint && sanitizeUrl(bpbdCustomEndpoint) !== '#') {
     try {
-      const bpbdResp = await fetch(safeBpbdEndpoint, {
-        headers: {
-          'Authorization': `Bearer ${bpbdApiKey}`,
-          'x-api-key': bpbdApiKey
-        }
-      });
-      if (bpbdResp.ok) {
-        const bpbdJson = await bpbdResp.json();
-        const alerts = bpbdJson.data || bpbdJson.alerts || bpbdJson;
-        if (Array.isArray(alerts)) {
-          alerts.forEach((item, idx) => {
-            // Sanitasi semua field dari API eksternal
-            const safeItemId  = escapeJsAttr(String(item.id || idx));
-            const lat = (typeof item.latitude  === 'number') ? item.latitude  : null;
-            const lng = (typeof item.longitude === 'number') ? item.longitude : null;
-            newGovAlerts.push({
-              id: 'custom-bpbd-' + safeItemId,
-              source: escapeHtml(String(item.source || 'BPBD Kota Kediri')),
-              category: 'darurat',
-              categoryLabel: 'RESMI BPBD KEDIRI',
-              badgeColor: '#dc2626',
-              badgeBg: '#fee2e2',
-              icon: '🚨',
-              iconBg: '#fee2e2',
-              title: escapeHtml(String(item.title || item.judul || 'Peringatan Darurat BPBD')),
-              desc: escapeHtml(String(item.desc || item.deskripsi || '')),
-              location: escapeHtml(String(item.location || 'Kota Kediri')),
-              time: 'Baru saja',
-              unread: true,
-              isGovernment: true,
-              latitude: lat,
-              longitude: lng,
-              actionLabel: 'Lihat Posko BPBD'
+      const parsedEndpoint = new URL(bpbdCustomEndpoint);
+      // Hanya izinkan HTTPS untuk keamanan
+      if (parsedEndpoint.protocol !== 'https:') {
+        console.warn('BPBD Endpoint harus menggunakan HTTPS');
+      } else {
+        const bpbdResp = await fetch(bpbdCustomEndpoint, {
+          headers: {
+            'Authorization': `Bearer ${bpbdApiKey}`,
+            'x-api-key': bpbdApiKey
+          }
+        });
+        if (bpbdResp.ok) {
+          const bpbdJson = await bpbdResp.json();
+          const alerts = bpbdJson.data || bpbdJson.alerts || bpbdJson;
+          if (Array.isArray(alerts)) {
+            alerts.slice(0, 20).forEach((item, idx) => { // Batasi max 20 alert
+              newGovAlerts.push({
+                id: 'custom-bpbd-' + escapeJsAttr(String(item.id || idx)),
+                source: String(item.source || 'BPBD Kota Kediri').substring(0, 100),
+                category: 'darurat',
+                categoryLabel: 'RESMI BPBD KEDIRI',
+                badgeColor: '#dc2626',
+                badgeBg: '#fee2e2',
+                icon: '🚨',
+                iconBg: '#fee2e2',
+                title: String(item.title || item.judul || 'Peringatan Darurat BPBD').substring(0, 255),
+                desc: String(item.desc || item.deskripsi || '').substring(0, 2000),
+                location: String(item.location || 'Kota Kediri').substring(0, 200),
+                time: 'Baru saja',
+                unread: true,
+                isGovernment: true,
+                latitude: typeof item.latitude === 'number' ? item.latitude : null,
+                longitude: typeof item.longitude === 'number' ? item.longitude : null,
+                actionLabel: 'Lihat Posko BPBD'
+              });
             });
-          });
+          }
         }
       }
     } catch (bpbdErr) {
@@ -4056,8 +4075,12 @@ async function syncDatabaseReports() {
     if (res.ok) {
       const json = await res.json();
       if (json && json.status === 'success' && Array.isArray(json.data)) {
-        const mockTitles = ['Pohon Tumbang Menutup Jalan Brawijaya', 'Lampu Penerangan Jalan Umum Padam', 'Genangan Air di Simpang Dhoho'];
-        const validDbReports = json.data.filter(r => r.id !== 1 && r.id !== 2 && r.id !== 3 && !mockTitles.some(t => (r.title || '').includes(t)));
+        const mockKeywords = ['pohon tumbang', 'lampu penerangan', 'lampu jalan', 'genangan air', 'simpang dhoho', 'brawijaya'];
+        const validDbReports = json.data.filter(r => {
+          if (r.id === 1 || r.id === 2 || r.id === 3 || r.id === 1714001 || r.id === 1714002) return false;
+          const titleLow = (r.title || '').toLowerCase();
+          return !mockKeywords.some(kw => titleLow.includes(kw));
+        });
         if (validDbReports.length > 0) {
           const localIds = new Set(webState.reports.map(r => r.id));
           validDbReports.forEach(dbRep => {
