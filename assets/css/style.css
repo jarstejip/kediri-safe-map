@@ -4285,11 +4285,16 @@ body.dark-theme .auth-alert.danger {
 
 /* Minimized Drawer State */
 .facilities-drawer.minimized {
-  padding-bottom: 8px !important;
+  padding-bottom: 10px !important;
+  cursor: pointer !important;
 }
 
 .facilities-drawer.minimized .cards-grid-row {
   display: none !important;
+}
+
+.facilities-drawer.minimized .drawer-header {
+  margin-bottom: 0 !important;
 }
 
 @media (max-width: 768px) {
@@ -4584,12 +4589,49 @@ body.dark-theme .auth-alert.danger {
   
   .drawer-drag-pill {
     display: block !important;
-    width: 34px !important;
+    width: 44px !important;
     height: 4px !important;
     background: #cbd5e1 !important;
     border-radius: 9999px !important;
-    margin: 0 auto 5px auto !important;
+    margin: 0 auto 6px auto !important;
     cursor: pointer !important;
+    position: relative !important;
+  }
+  .drawer-drag-pill::after {
+    content: '';
+    position: absolute;
+    top: -12px;
+    bottom: -12px;
+    left: -25px;
+    right: -25px;
+  }
+
+  /* Minimized drawer state on mobile */
+  .facilities-drawer.minimized {
+    padding: 7px 12px 9px 12px !important;
+    cursor: pointer !important;
+    background: #ffffff !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18) !important;
+    border: 1.5px solid #86efac !important;
+  }
+  
+  .facilities-drawer.minimized .cards-grid-row {
+    display: none !important;
+  }
+  
+  .facilities-drawer.minimized .drawer-header {
+    margin-bottom: 0 !important;
+  }
+
+  .facilities-drawer.minimized .drawer-drag-pill {
+    background: #86efac !important;
+  }
+
+  .facilities-drawer.minimized .drawer-toggle-btn {
+    background: #dcfce7 !important;
+    color: #15803d !important;
+    border-color: #86efac !important;
+    box-shadow: 0 2px 6px rgba(21, 128, 61, 0.2) !important;
   }
   
   .drawer-header {

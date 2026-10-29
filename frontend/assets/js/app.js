@@ -1960,8 +1960,14 @@ function updateFacilitiesWithLiveLocation(lat, lng) {
   renderDrawerFacilityCards();
 
   const subTitle = document.getElementById('drawer-sub-title') || document.querySelector('.drawer-sub');
+  const drawerEl = document.getElementById('main-facilities-drawer');
+  const isDrawerMin = drawerEl && drawerEl.classList.contains('minimized');
   if (subTitle && kediriFacilities.length > 0) {
-    subTitle.textContent = `📍 Terdekat: ${kediriFacilities[0].name} (${kediriFacilities[0].distance})`;
+    if (!isDrawerMin) {
+      subTitle.textContent = `📍 Terdekat: ${kediriFacilities[0].name} (${kediriFacilities[0].distance})`;
+    } else {
+      subTitle.dataset.prevText = `📍 Terdekat: ${kediriFacilities[0].name} (${kediriFacilities[0].distance})`;
+    }
   }
 
   // 4. Deteksi nama Desa / Kecamatan pengguna secara real-time
@@ -2002,21 +2008,126 @@ function renderDrawerFacilityCards() {
   }).join('');
 }
 
-// Buka / Tutup Drawer Fasilitas di Mobile & Desktop
+// Kontrol Buka / Tutup Drawer Fasilitas (Mobile Gesture & Desktop)
+function setDrawerCollapsed(isCollapsed) {
+  const drawer = document.getElementById('main-facilities-drawer');
+  if (!drawer) return;
+
+  if (isCollapsed) {
+    drawer.classList.add('minimized');
+  } else {
+    drawer.classList.remove('minimized');
+  }
+
+  const btn = document.getElementById('drawer-toggle-btn');
+  const subTitle = document.getElementById('drawer-sub-title') || document.querySelector('.drawer-sub');
+
+  if (drawer.classList.contains('minimized')) {
+    if (btn) {
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
+      btn.title = "Buka panel fasilitas";
+      btn.setAttribute('aria-expanded', 'false');
+    }
+    if (subTitle) {
+      if (!subTitle.dataset.prevText) {
+        subTitle.dataset.prevText = subTitle.textContent;
+      }
+      subTitle.innerHTML = `<span style="color:#15803d;font-weight:700;">👆 Ketuk / geser ke atas untuk membuka</span>`;
+    }
+  } else {
+    if (btn) {
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+      btn.title = "Sembunyikan panel";
+      btn.setAttribute('aria-expanded', 'true');
+    }
+    if (subTitle) {
+      if (kediriFacilities.length > 0 && kediriFacilities[0].distance) {
+        subTitle.textContent = `📍 Terdekat: ${kediriFacilities[0].name} (${kediriFacilities[0].distance})`;
+      } else if (subTitle.dataset.prevText) {
+        subTitle.textContent = subTitle.dataset.prevText;
+      } else {
+        subTitle.textContent = 'Mendeteksi lokasi & fasilitas darurat terdekat...';
+      }
+    }
+  }
+}
+
 function toggleDrawerCollapse() {
   const drawer = document.getElementById('main-facilities-drawer');
   if (!drawer) return;
-  drawer.classList.toggle('minimized');
-  const btn = document.getElementById('drawer-toggle-btn');
-  if (btn) {
-    if (drawer.classList.contains('minimized')) {
-      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
-      btn.title = "Buka panel fasilitas";
-    } else {
-      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
-      btn.title = "Sembunyikan panel";
+  const isCurrentlyMinimized = drawer.classList.contains('minimized');
+  setDrawerCollapsed(!isCurrentlyMinimized);
+}
+
+// Inisialisasi gestur swipe geser ke bawah (tutup) dan geser ke atas (buka)
+function initFacilitiesDrawerGestures() {
+  const drawer = document.getElementById('main-facilities-drawer');
+  if (!drawer || drawer.dataset.gestureBound === 'true') return;
+  drawer.dataset.gestureBound = 'true';
+
+  let touchStartY = 0;
+  let touchStartX = 0;
+  let touchStartTime = 0;
+  let isSwiping = false;
+
+  drawer.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches.length === 1) {
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+      touchStartTime = Date.now();
+      isSwiping = true;
     }
-  }
+  }, { passive: true });
+
+  drawer.addEventListener('touchmove', (e) => {
+    if (!isSwiping || !e.touches || e.touches.length !== 1) return;
+    const deltaY = e.touches[0].clientY - touchStartY;
+    const deltaX = e.touches[0].clientX - touchStartX;
+
+    // Abaikan gestur jika pengguna sedang scroll horizontal pada daftar kartu fasilitas
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 15) {
+      isSwiping = false;
+    }
+  }, { passive: true });
+
+  drawer.addEventListener('touchend', (e) => {
+    if (!isSwiping || !e.changedTouches || e.changedTouches.length === 0) return;
+    const deltaY = e.changedTouches[0].clientY - touchStartY;
+    const deltaX = e.changedTouches[0].clientX - touchStartX;
+    const timeDiff = Date.now() - touchStartTime;
+
+    isSwiping = false;
+
+    // Deteksi gestur vertikal yang dominan
+    if (Math.abs(deltaY) > Math.abs(deltaX)) {
+      // Geser jari ke BAWAH (> 25px) -> Tutup / Minimalkan panel
+      if (deltaY > 25) {
+        setDrawerCollapsed(true);
+        return;
+      }
+      // Geser jari ke ATAS (< -20px) -> Buka / Kembalikan panel
+      if (deltaY < -20) {
+        setDrawerCollapsed(false);
+        return;
+      }
+    }
+
+    // Jika tap singkat pada panel yang sedang minim -> otomatis buka kembali
+    if (timeDiff < 300 && Math.abs(deltaY) < 12 && Math.abs(deltaX) < 12) {
+      if (drawer.classList.contains('minimized')) {
+        setDrawerCollapsed(false);
+      }
+    }
+  }, { passive: true });
+
+  // Klik di mana saja pada drawer saat dalam kondisi minim akan otomatis mengembalikannya
+  drawer.addEventListener('click', (e) => {
+    if (drawer.classList.contains('minimized')) {
+      if (!e.target.closest('.drawer-link-btn')) {
+        setDrawerCollapsed(false);
+      }
+    }
+  });
 }
 
 // Deteksi nama desa / kecamatan pengguna
@@ -4114,6 +4225,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderWebReportsStack();
   updateNotificationBadge();
   renderDrawerFacilityCards();
+  initFacilitiesDrawerGestures();
   if (navigator.geolocation) {
     startRealtimeGeolocation();
   }
