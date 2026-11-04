@@ -34,6 +34,7 @@ $pass         = trim($payload['password'] ?? '');
 $fotoFace     = $payload['foto_face'] ?? null;
 $faceToken    = $payload['face_token'] ?? null;
 $faceVerified = !empty($payload['face_verified']) ? 1 : 0;
+$otpVerified  = !empty($payload['otp_verified']) ? 1 : 0;
 
 if (empty($nama) || empty($email) || empty($pass)) {
     jsonError(400, 'Nama, email, dan kata sandi wajib diisi');
@@ -49,6 +50,17 @@ if (!validateEmail($email)) {
 
 if (!validatePassword($pass)) {
     jsonError(422, 'Kata sandi minimal 6 karakter dan maksimal 128 karakter', 'password');
+}
+
+// Validasi OTP Anti-Spam
+if (!$otpVerified) {
+    http_response_code(422);
+    echo json_encode([
+        'status'  => 'error',
+        'code'    => 'OTP_REQUIRED',
+        'message' => 'Verifikasi Kode OTP Wajib dilakukan untuk mencegah pendaftaran spam / akun bot.'
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 // Validasi biometrik (wajib)

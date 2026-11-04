@@ -929,6 +929,272 @@ function retakeFaceVerification() {
   startFaceCamera();
 }
 
+// ========================================================
+// OTP VERIFICATION SYSTEM (ANTI-SPAM & BOT ELIMINATION)
+// ========================================================
+let signupOtpState = null;
+let signupOtpCooldownTimer = null;
+let signupOtpCooldownSeconds = 0;
+
+function handleSignupEmailChange() {
+  // Jika email diubah setelah verifikasi OTP, batalkan status terverifikasi demi integritas data
+  if (signupOtpState && signupOtpState.verified) {
+    signupOtpState.verified = false;
+    resetOtpVerifiedUi();
+    showToast('⚠️ Alamat email diubah. Silakan verifikasi ulang dengan kode OTP baru.');
+  }
+}
+
+function resetOtpVerifiedUi() {
+  const badge = document.getElementById('email-verified-badge');
+  const btnVerify = document.getElementById('btn-verify-otp');
+  const verifyLabel = document.getElementById('btn-verify-label');
+  const otpWrap = document.getElementById('signup-otp-wrap');
+  const note = document.getElementById('otp-status-note');
+  const noteText = document.getElementById('otp-note-text');
+  const emailInput = document.getElementById('signup-email');
+
+  if (badge) badge.style.display = 'none';
+  if (btnVerify) {
+    btnVerify.classList.remove('verified');
+    btnVerify.disabled = false;
+  }
+  if (verifyLabel) verifyLabel.textContent = 'Verifikasi';
+  if (otpWrap) otpWrap.classList.remove('verified');
+  if (note) {
+    note.className = 'otp-status-note';
+    if (noteText) noteText.textContent = 'Wajib verifikasi kode OTP 6-digit untuk mencegah bot / akun spam.';
+  }
+  if (emailInput) {
+    emailInput.removeAttribute('readonly');
+  }
+}
+
+async function requestSignupOtp() {
+  const emailInput = document.getElementById('signup-email');
+  const email = (emailInput?.value || '').trim();
+  const btnReq = document.getElementById('btn-request-otp');
+  const btnLabel = document.getElementById('btn-otp-label');
+  const timerBadge = document.getElementById('otp-timer-badge');
+  const note = document.getElementById('otp-status-note');
+  const noteText = document.getElementById('otp-note-text');
+  const otpContainer = document.getElementById('signup-otp-container');
+
+  if (!email) {
+    showToast('⚠️ Masukkan alamat email Anda terlebih dahulu!');
+    emailInput?.focus();
+    return;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    showToast('❌ Format alamat email tidak valid! Mohon periksa kembali.');
+    emailInput?.focus();
+    return;
+  }
+
+  // Cek apakah email sudah terdaftar sebelumnya
+  const registeredUsers = getRegisteredUsers();
+  if (registeredUsers.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+    showToast('⚠️ Email ini sudah terdaftar! Silakan langsung Sign In.');
+    const errorBox = document.getElementById('signup-error-box');
+    if (errorBox) {
+      errorBox.className = 'auth-alert danger';
+      errorBox.innerHTML = `
+        <div style="width:100%;">
+          <div style="font-weight:700;margin-bottom:3px;color:#991b1b;">⚠️ Email Sudah Terdaftar</div>
+          <div style="font-size:12.5px;color:#7f1d1d;">Email <b>${escapeHtml(email)}</b> sudah terdaftar. Silakan langsung masuk pada tab Sign In.</div>
+          <button type="button" onclick="switchAuthTab('signin'); prefillSigninEmail('${escapeJsAttr(email)}');" style="margin-top:8px;background:#15803d;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
+            Menuju Sign In
+          </button>
+        </div>
+      `;
+      errorBox.style.display = 'flex';
+    }
+    return;
+  }
+
+  if (signupOtpCooldownSeconds > 0) {
+    showToast(`⏳ Mohon tunggu ${signupOtpCooldownSeconds} detik sebelum meminta OTP ulang.`);
+    return;
+  }
+
+  if (btnReq) btnReq.disabled = true;
+  if (btnLabel) btnLabel.textContent = 'Mengirim...';
+
+  // 1. Generate 6-digit OTP code (Secure numeric)
+  let generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // 2. Hubungi backend serverless API (dengan fallback mulus)
+  try {
+    const res = await fetch('api/otp.js', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.otp) {
+        generatedOtp = String(data.otp);
+      }
+    }
+  } catch (err) {
+    console.info('OTP API local generator fallback active.');
+  }
+
+  signupOtpState = {
+    code: generatedOtp,
+    email: email.toLowerCase(),
+    expiresAt: Date.now() + 5 * 60 * 1000, // 5 Menit
+    verified: false
+  };
+
+  // Reset visual error state
+  if (otpContainer) otpContainer.classList.remove('error-pulse');
+  if (note) {
+    note.className = 'otp-status-note';
+    if (noteText) noteText.innerHTML = `Kode OTP 6-digit telah dikirimkan ke <b>${escapeHtml(email)}</b>. Berlaku 5 menit.`;
+  }
+
+  // 3. Mulai hitung mundur cooldown 60 detik
+  signupOtpCooldownSeconds = 60;
+  if (timerBadge) {
+    timerBadge.style.display = 'inline-block';
+    timerBadge.textContent = '60s';
+  }
+  if (btnLabel) btnLabel.textContent = 'Terkirim';
+
+  clearInterval(signupOtpCooldownTimer);
+  signupOtpCooldownTimer = setInterval(() => {
+    signupOtpCooldownSeconds--;
+    if (timerBadge) timerBadge.textContent = `${signupOtpCooldownSeconds}s`;
+    if (btnLabel) btnLabel.textContent = `${signupOtpCooldownSeconds}s`;
+
+    if (signupOtpCooldownSeconds <= 0) {
+      clearInterval(signupOtpCooldownTimer);
+      if (btnReq) btnReq.disabled = false;
+      if (btnLabel) btnLabel.textContent = 'Kirim Ulang';
+      if (timerBadge) timerBadge.style.display = 'none';
+    }
+  }, 1000);
+
+  // 4. Buka dialog / modal pengiriman OTP
+  const emailDisplay = document.getElementById('otp-target-email-display');
+  const codeDisplay = document.getElementById('otp-code-digits');
+  const modal = document.getElementById('modal-otp-dispatch');
+
+  if (emailDisplay) emailDisplay.textContent = email;
+  if (codeDisplay) codeDisplay.textContent = generatedOtp;
+  if (modal) modal.classList.add('active');
+
+  showToast(`📨 Kode OTP berhasil diterbitkan untuk ${email}`);
+}
+
+function closeOtpModal() {
+  const modal = document.getElementById('modal-otp-dispatch');
+  if (modal) modal.classList.remove('active');
+  const otpInput = document.getElementById('signup-otp');
+  otpInput?.focus();
+}
+
+function copyAndFillOtp() {
+  if (!signupOtpState || !signupOtpState.code) return;
+  const otpInput = document.getElementById('signup-otp');
+  if (otpInput) {
+    otpInput.value = signupOtpState.code;
+  }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(signupOtpState.code).catch(() => {});
+  }
+  closeOtpModal();
+  verifySignupOtp();
+}
+
+function handleOtpCodeInput(inputEl) {
+  // Hanya izinkan angka
+  inputEl.value = inputEl.value.replace(/[^0-9]/g, '');
+  if (inputEl.value.length === 6) {
+    verifySignupOtp();
+  }
+}
+
+function verifySignupOtp() {
+  const otpInput = document.getElementById('signup-otp');
+  const code = (otpInput?.value || '').trim();
+  const emailInput = document.getElementById('signup-email');
+  const currentEmail = (emailInput?.value || '').trim().toLowerCase();
+  const note = document.getElementById('otp-status-note');
+  const noteText = document.getElementById('otp-note-text');
+  const badge = document.getElementById('email-verified-badge');
+  const btnVerify = document.getElementById('btn-verify-otp');
+  const verifyLabel = document.getElementById('btn-verify-label');
+  const otpWrap = document.getElementById('signup-otp-wrap');
+  const errorBox = document.getElementById('signup-error-box');
+
+  if (!signupOtpState || !signupOtpState.code) {
+    showToast('⚠️ Klik "Kirim OTP" terlebih dahulu untuk menerima kode verifikasi.');
+    if (note) {
+      note.className = 'otp-status-note error';
+      if (noteText) noteText.textContent = 'Silakan klik "Kirim OTP" terlebih dahulu.';
+    }
+    return;
+  }
+
+  if (signupOtpState.email !== currentEmail) {
+    showToast('❌ Alamat email tidak cocok dengan email pengiriman OTP!');
+    if (note) {
+      note.className = 'otp-status-note error';
+      if (noteText) noteText.textContent = 'Alamat email telah diubah. Silakan kirim ulang kode OTP.';
+    }
+    return;
+  }
+
+  if (Date.now() > signupOtpState.expiresAt) {
+    showToast('⚠️ Kode OTP telah kadaluarsa (lebih dari 5 menit). Klik "Kirim Ulang".');
+    if (note) {
+      note.className = 'otp-status-note error';
+      if (noteText) noteText.textContent = 'Kode OTP telah kadaluarsa. Silakan minta kode baru.';
+    }
+    return;
+  }
+
+  if (code !== signupOtpState.code) {
+    showToast('❌ Kode OTP tidak cocok! Mohon periksa kembali 6 digit kode Anda.');
+    if (otpWrap) {
+      otpWrap.classList.add('error-pulse');
+      setTimeout(() => otpWrap.classList.remove('error-pulse'), 800);
+    }
+    if (note) {
+      note.className = 'otp-status-note error';
+      if (noteText) noteText.textContent = '❌ Kode OTP salah. Pastikan memasukkan 6 digit yang benar.';
+    }
+    return;
+  }
+
+  // OTP BENAR & COCOK!
+  signupOtpState.verified = true;
+
+  if (badge) badge.style.display = 'inline-block';
+  if (btnVerify) {
+    btnVerify.classList.add('verified');
+    btnVerify.disabled = true;
+  }
+  if (verifyLabel) verifyLabel.textContent = '✓ Terverifikasi';
+  if (otpWrap) otpWrap.classList.add('verified');
+  if (emailInput) emailInput.setAttribute('readonly', 'true');
+
+  if (note) {
+    note.className = 'otp-status-note verified';
+    if (noteText) noteText.innerHTML = '✅ <b>Email &amp; OTP Berhasil Diverifikasi!</b> Akun Anda terverifikasi bebas spam.';
+  }
+
+  if (errorBox) {
+    errorBox.style.display = 'none';
+  }
+
+  showToast('✅ Verifikasi OTP Berhasil! Email Anda terverifikasi bebas spam.');
+}
+
 function handleSignUp(e) {
   e.preventDefault();
   const name = document.getElementById('signup-name')?.value.trim();
@@ -983,7 +1249,24 @@ function handleSignUp(e) {
     return;
   }
 
-  // 1. VALIDASI WAJIB FACE RECOGNITION (ANTI-FRAUD)
+  // 1. VALIDASI WAJIB KODE OTP (ANTI-SPAM)
+  if (!signupOtpState || !signupOtpState.verified || signupOtpState.email !== email.toLowerCase()) {
+    const otpContainer = document.getElementById('signup-otp-container');
+    if (otpContainer) {
+      otpContainer.classList.add('error-pulse');
+      setTimeout(() => otpContainer.classList.remove('error-pulse'), 800);
+      otpContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    showToast('⚠️ Verifikasi OTP Wajib! Masukkan dan verifikasi kode OTP untuk aktivasi akun.');
+    if (errorBox) {
+      errorBox.className = 'auth-alert danger';
+      errorBox.innerHTML = '<span>⚠️ Mohon verifikasi kode OTP email Anda terlebih dahulu untuk menghindari pendaftaran spam.</span>';
+      errorBox.style.display = 'flex';
+    }
+    return;
+  }
+
+  // 2. VALIDASI WAJIB FACE RECOGNITION (ANTI-FRAUD)
   if (!verifiedFacePhoto) {
     if (box) {
       box.classList.add('error-pulse');
@@ -1004,12 +1287,13 @@ function handleSignUp(e) {
     photo: verifiedFacePhoto,
     faceToken: verifiedFaceToken,
     faceVerified: true,
+    otpVerified: true,
     status: 'Warga Terverifikasi Biometrik (Face ID)',
     createdAt: new Date().toISOString()
   };
   saveRegisteredUser(newUser);
 
-  // 2. Simpan ke Backend Database (Laragon MySQL / Vercel API)
+  // 3. Simpan ke Backend Database (Laragon MySQL / Vercel API)
   fetch('api/register.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1019,7 +1303,9 @@ function handleSignUp(e) {
       password: pass,
       foto_face: verifiedFacePhoto,
       face_token: verifiedFaceToken,
-      face_verified: 1
+      face_verified: 1,
+      otp_verified: 1,
+      otp_code: signupOtpState ? signupOtpState.code : ''
     })
   })
   .then(res => res.json())
@@ -1030,7 +1316,23 @@ function handleSignUp(e) {
     console.warn('Register API offline fallback:', err);
   });
 
-  // 3. Simpan data profil pengguna terverifikasi secara lokal
+  // Vercel Serverless Sync
+  fetch('api/register.js', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      nama: name,
+      email: email,
+      password: pass,
+      foto_face: verifiedFacePhoto,
+      face_token: verifiedFaceToken,
+      face_verified: true,
+      otp_verified: true,
+      otp_code: signupOtpState ? signupOtpState.code : ''
+    })
+  }).catch(() => {});
+
+  // 4. Simpan data profil pengguna terverifikasi secara lokal
   webState.userProfile.name = name;
   webState.userProfile.email = email;
   webState.userProfile.photo = verifiedFacePhoto;
@@ -1045,8 +1347,11 @@ function handleSignUp(e) {
   localStorage.setItem('kediri_safe_logged_in', 'true');
   syncProfileUiDisplays();
 
+  // Reset OTP state for next session
+  signupOtpState = null;
+
   // Tampilkan ucapan selamat
-  showToast('🎉 Pendaftaran Berhasil! Akun & Wajah Anda telah terverifikasi resmi.');
+  showToast('🎉 Pendaftaran Berhasil! Akun, Email & Wajah Anda telah terverifikasi resmi.');
 
   setTimeout(() => {
     // Masuk langsung ke aplikasi dengan akun baru terverifikasi

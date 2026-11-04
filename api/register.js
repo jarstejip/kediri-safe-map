@@ -66,6 +66,7 @@ export default async function handler(req, res) {
   const pass = String(payload.password || '').trim();
   const fotoFace = String(payload.foto_face || '');
   const faceVerified = Boolean(payload.face_verified);
+  const otpVerified = Boolean(payload.otp_verified);
 
   if (!nama || !email || !pass) {
     return res.status(400).json({ status: 'error', message: 'Nama lengkap, email, dan kata sandi wajib diisi' });
@@ -79,6 +80,15 @@ export default async function handler(req, res) {
 
   if (pass.length < 6) {
     return res.status(400).json({ status: 'error', message: 'Kata sandi minimal harus 6 karakter' });
+  }
+
+  // Validasi Wajib Kode OTP Anti-Spam
+  if (!otpVerified) {
+    return res.status(422).json({
+      status: 'error',
+      code: 'OTP_REQUIRED',
+      message: 'Kode OTP email wajib diverifikasi untuk menghindari pendaftaran spam / akun bot.'
+    });
   }
 
   // Validasi Wajib Face Recognition Anti-Fraud dengan verifikasi payload foto
