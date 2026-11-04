@@ -2133,6 +2133,27 @@ function logoutToAuth() {
   openLogoutModal();
 }
 
+// 6. Download Android APK Modal Handlers
+let MEDIAFIRE_DOWNLOAD_URL = 'https://www.mediafire.com';
+
+function setMediafireDownloadUrl(url) {
+  if (url) {
+    MEDIAFIRE_DOWNLOAD_URL = url;
+    const btn = document.getElementById('btn-mediafire-download');
+    if (btn) btn.href = url;
+  }
+}
+
+function openDownloadAppModal() {
+  const btn = document.getElementById('btn-mediafire-download');
+  if (btn) btn.href = MEDIAFIRE_DOWNLOAD_URL;
+  document.getElementById('modal-download-app')?.classList.add('active');
+}
+
+function closeDownloadAppModal() {
+  document.getElementById('modal-download-app')?.classList.remove('active');
+}
+
 // ---- Switch Web Tabs (Map, SOS, Profile) ----
 function switchWebTab(tabName) {
   webState.currentTab = tabName;
