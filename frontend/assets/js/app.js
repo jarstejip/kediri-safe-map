@@ -1059,11 +1059,7 @@ async function requestSignupOtp() {
   if (note) {
     note.className = 'otp-status-note';
     if (noteText) {
-      if (sentViaGmail) {
-        noteText.innerHTML = `📬 Kode OTP telah terkirim ke kotak masuk Gmail <b>${escapeHtml(email)}</b>. Cek inbox/spam Gmail Anda.`;
-      } else {
-        noteText.innerHTML = `Kode OTP 6-digit telah diterbitkan untuk <b>${escapeHtml(email)}</b>. Berlaku 5 menit.`;
-      }
+      noteText.innerHTML = `📬 Kode OTP 6-digit telah dikirim ke kotak masuk email <b>${escapeHtml(email)}</b>. Cek inbox/spam Gmail Anda (berlaku 5 menit).`;
     }
   }
 
@@ -1089,25 +1085,17 @@ async function requestSignupOtp() {
     }
   }, 1000);
 
-  // 4. Buka dialog / modal pengiriman OTP
-  const emailDisplay = document.getElementById('otp-target-email-display');
-  const codeDisplay = document.getElementById('otp-code-digits');
-  const modal = document.getElementById('modal-otp-dispatch');
-
-  if (emailDisplay) emailDisplay.textContent = email;
-  if (codeDisplay) codeDisplay.textContent = generatedOtp;
-  if (modal) modal.classList.add('active');
-
-  if (sentViaGmail) {
-    showToast(`📬 Kode OTP berhasil dikirim ke kotak masuk Gmail ${email}!`);
-  } else {
-    showToast(`📨 Kode OTP berhasil diterbitkan untuk ${email}`);
+  // 4. Fokuskan langsung ke input kode OTP
+  const otpInput = document.getElementById('signup-otp');
+  if (otpInput) {
+    otpInput.focus();
+    otpInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
+
+  showToast(`📬 Kode OTP telah dikirim ke email ${email}. Silakan cek inbox/spam!`);
 }
 
 function closeOtpModal() {
-  const modal = document.getElementById('modal-otp-dispatch');
-  if (modal) modal.classList.remove('active');
   const otpInput = document.getElementById('signup-otp');
   otpInput?.focus();
 }
@@ -1118,10 +1106,6 @@ function copyAndFillOtp() {
   if (otpInput) {
     otpInput.value = signupOtpState.code;
   }
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(signupOtpState.code).catch(() => {});
-  }
-  closeOtpModal();
   verifySignupOtp();
 }
 

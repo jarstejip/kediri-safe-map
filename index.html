@@ -1378,52 +1378,6 @@
     </div>
   </div>
 
-  <!-- ========================================================
-       MODAL 6: SIMULASI PENERIMAAN KODE OTP (ANTI-SPAM)
-       ======================================================== -->
-  <div id="modal-otp-dispatch" class="oauth-modal-overlay" onclick="if(event.target===this) closeOtpModal()">
-    <div class="profile-modal-card otp-dispatch-card">
-      <div class="oauth-modal-header" style="background: linear-gradient(135deg, #15803d 0%, #166534 100%); color: #ffffff;">
-        <div class="oauth-title-group">
-          <span class="oauth-modal-title" style="color:#ffffff;">🔐 Kode OTP Verifikasi Akun</span>
-          <span class="oauth-modal-sub" style="color:#bbf7d0;">Proteksi Anti-Spam Kediri Safe Map</span>
-        </div>
-        <button type="button" class="btn-close-modal" style="color:#ffffff; background: rgba(255,255,255,0.2);" onclick="closeOtpModal()">✕</button>
-      </div>
-      <div class="otp-modal-body">
-        <div class="otp-icon-wrapper">
-          <span class="otp-big-icon">✉️</span>
-        </div>
-        <h4 class="otp-sent-title">Kode Verifikasi Telah Dikirim!</h4>
-        <p class="otp-sent-desc">
-          Kode 6-digit verifikasi OTP anti-spam telah diterbitkan untuk email:
-          <b id="otp-target-email-display" class="otp-target-email">user@email.com</b>.
-          Gunakan kode di bawah ini untuk mengonfirmasi pendaftaran akun Anda:
-        </p>
-
-        <div class="otp-code-display-box">
-          <div class="otp-code-digits" id="otp-code-digits">123456</div>
-          <button type="button" class="btn-copy-otp" onclick="copyAndFillOtp()" title="Salin dan Tempel Kode Otomatis">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-            </svg>
-            <span>Salin &amp; Tempel Otomatis</span>
-          </button>
-        </div>
-
-        <div class="otp-security-notice">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-          <span>Sistem proteksi OTP &amp; Biometrik aktif untuk mengeliminasi bot dan spam pendaftaran akun palsu. Kode berlaku selama 5 menit.</span>
-        </div>
-      </div>
-      <div class="modal-form-actions" style="padding: 12px 20px; background: #f8fafc; margin: 0; justify-content: center;">
-        <button type="button" class="btn-green-pill" style="max-width: 220px; height: 42px; font-size: 14px; font-style: normal; margin-top: 0;" onclick="copyAndFillOtp()">Masukkan Kode Otomatis</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Google Identity Services SDK Script (Official Google Library) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
