@@ -129,7 +129,7 @@ export default async function handler(req, res) {
 
   // Konfigurasi Resend API & Gmail SMTP dari Environment Variables
   const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
-  const resendFrom = (process.env.RESEND_FROM || 'Kediri Safe Map <onboarding@resend.dev>').trim();
+  const resendFrom = (process.env.RESEND_FROM || 'Kediri Safe Map <otp@kedirisafe.my.id>').trim();
   const gmailUser = (process.env.GMAIL_USER || process.env.EMAIL_USER || '').trim();
   const gmailPass = (process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_PASS || process.env.EMAIL_PASS || '').replace(/\s+/g, '').trim();
 
