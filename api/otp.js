@@ -127,14 +127,50 @@ export default async function handler(req, res) {
   // Generate 6-digit numeric OTP securely
   const otpNumber = crypto.randomInt(100000, 999999).toString();
 
-  // Konfigurasi Gmail SMTP dari Environment Variables
+  // Konfigurasi Resend API & Gmail SMTP dari Environment Variables
+  const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
+  const resendFrom = (process.env.RESEND_FROM || 'Kediri Safe Map <onboarding@resend.dev>').trim();
   const gmailUser = (process.env.GMAIL_USER || process.env.EMAIL_USER || '').trim();
   const gmailPass = (process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_PASS || process.env.EMAIL_PASS || '').replace(/\s+/g, '').trim();
 
   let emailSentReal = false;
   let emailError = null;
+  let providerUsed = null;
 
-  if (gmailUser && gmailPass) {
+  // PRIORITAS 1: Resend API (HTTP REST)
+  if (resendApiKey) {
+    try {
+      const resendRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: resendFrom,
+          to: [email],
+          subject: `Kode Verifikasi OTP: ${otpNumber} - Kediri Safe Map`,
+          text: `Kode OTP verifikasi Kediri Safe Map Anda adalah: ${otpNumber}. Kode berlaku 5 menit. Jangan berikan kepada siapapun.`,
+          html: buildOtpHtmlEmail(otpNumber, email)
+        })
+      });
+
+      const resendData = await resendRes.json();
+      if (resendRes.ok && resendData && resendData.id) {
+        emailSentReal = true;
+        providerUsed = 'resend';
+      } else {
+        emailError = resendData?.message || 'Gagal mengirim email melalui Resend';
+        console.error('[Resend Error]:', resendData);
+      }
+    } catch (err) {
+      console.error('[Resend Fetch Error]:', err);
+      emailError = err.message;
+    }
+  }
+
+  // PRIORITAS 2: Gmail SMTP (Nodemailer) jika Resend belum dikonfigurasi
+  if (!emailSentReal && gmailUser && gmailPass) {
     try {
       const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -153,23 +189,26 @@ export default async function handler(req, res) {
       });
 
       emailSentReal = true;
+      providerUsed = 'gmail_smtp';
+      emailError = null; // Clear Resend error if Gmail SMTP succeeded
     } catch (err) {
       console.error('[Gmail SMTP Error]:', err);
-      emailError = err.message;
+      if (!emailError) emailError = err.message;
     }
   }
 
   return res.status(200).json({
     status: 'success',
     message: emailSentReal
-      ? `Kode OTP 6-digit berhasil dikirimkan langsung ke kotak masuk Gmail ${email}.`
+      ? `Kode OTP 6-digit berhasil dikirimkan langsung ke kotak masuk email ${email}.`
       : `Kode OTP anti-spam berhasil diterbitkan untuk ${email}.`,
     sent_via_gmail: emailSentReal,
+    provider: providerUsed,
     otp: otpNumber,
     email: email,
     expires_in: 300, // 5 menit
-    hint: !emailSentReal && (!gmailUser || !gmailPass)
-      ? 'GMAIL_USER dan GMAIL_APP_PASSWORD belum diisi di Environment Variables Vercel.'
+    hint: !emailSentReal && !resendApiKey && (!gmailUser || !gmailPass)
+      ? 'RESEND_API_KEY atau GMAIL_APP_PASSWORD belum diisi di Environment Variables Vercel.'
       : (emailError || null)
   });
 }
