@@ -1,0 +1,12 @@
+{
+  "name": "kediri-safe-map",
+  "version": "1.0.0",
+  "description": "Sistem Informasi & Peta Tanggap Darurat Kota Kediri",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.16"
+  }
+}

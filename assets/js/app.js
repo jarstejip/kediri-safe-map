@@ -1024,6 +1024,7 @@ async function requestSignupOtp() {
 
   // 1. Generate 6-digit OTP code (Secure numeric)
   let generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+  let sentViaGmail = false;
 
   // 2. Hubungi backend serverless API (dengan fallback mulus)
   try {
@@ -1037,6 +1038,9 @@ async function requestSignupOtp() {
       if (data && data.otp) {
         generatedOtp = String(data.otp);
       }
+      if (data && data.sent_via_gmail) {
+        sentViaGmail = true;
+      }
     }
   } catch (err) {
     console.info('OTP API local generator fallback active.');
@@ -1046,14 +1050,21 @@ async function requestSignupOtp() {
     code: generatedOtp,
     email: email.toLowerCase(),
     expiresAt: Date.now() + 5 * 60 * 1000, // 5 Menit
-    verified: false
+    verified: false,
+    sentViaGmail: sentViaGmail
   };
 
   // Reset visual error state
   if (otpContainer) otpContainer.classList.remove('error-pulse');
   if (note) {
     note.className = 'otp-status-note';
-    if (noteText) noteText.innerHTML = `Kode OTP 6-digit telah dikirimkan ke <b>${escapeHtml(email)}</b>. Berlaku 5 menit.`;
+    if (noteText) {
+      if (sentViaGmail) {
+        noteText.innerHTML = `📬 Kode OTP telah terkirim ke kotak masuk Gmail <b>${escapeHtml(email)}</b>. Cek inbox/spam Gmail Anda.`;
+      } else {
+        noteText.innerHTML = `Kode OTP 6-digit telah diterbitkan untuk <b>${escapeHtml(email)}</b>. Berlaku 5 menit.`;
+      }
+    }
   }
 
   // 3. Mulai hitung mundur cooldown 60 detik
@@ -1087,7 +1098,11 @@ async function requestSignupOtp() {
   if (codeDisplay) codeDisplay.textContent = generatedOtp;
   if (modal) modal.classList.add('active');
 
-  showToast(`📨 Kode OTP berhasil diterbitkan untuk ${email}`);
+  if (sentViaGmail) {
+    showToast(`📬 Kode OTP berhasil dikirim ke kotak masuk Gmail ${email}!`);
+  } else {
+    showToast(`📨 Kode OTP berhasil diterbitkan untuk ${email}`);
+  }
 }
 
 function closeOtpModal() {
