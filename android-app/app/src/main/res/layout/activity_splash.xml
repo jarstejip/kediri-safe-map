@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/primary"
+    android:background="@color/white"
     android:gravity="center">
 
     <LinearLayout
@@ -12,15 +12,15 @@
         android:gravity="center"
         android:padding="24dp">
 
-        <!-- App Name -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Kediri Safe Map"
-            android:textColor="@color/white"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.02" />
+        <!-- Official Kediri Safe Map Logo Image -->
+        <ImageView
+            android:id="@+id/imgSplashLogo"
+            android:layout_width="260dp"
+            android:layout_height="220dp"
+            android:contentDescription="Logo Kediri Safe Map"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:src="@drawable/logo_kediri_safe" />
 
         <!-- Tagline -->
         <TextView
@@ -28,9 +28,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="SATU PETA SATU INFORMASI"
-            android:textColor="#BBF7D0"
+            android:textColor="@color/primary"
             android:textSize="12sp"
-            android:letterSpacing="0.1"
+            android:letterSpacing="0.12"
             android:textStyle="bold" />
 
         <!-- Subtitle -->
@@ -38,17 +38,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Tanggap Darurat &amp; Keamanan Warga Kota Kediri"
-            android:textColor="#DCFCE7"
-            android:textSize="13sp" />
+            android:text="Sistem Tanggap Darurat &amp; Keamanan Warga"
+            android:textColor="@color/text_muted"
+            android:textSize="12.5sp" />
 
         <!-- Spinner Loading -->
         <ProgressBar
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_marginTop="36dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginTop="28dp"
             android:indeterminate="true"
-            android:indeterminateTint="@color/white" />
+            android:indeterminateTint="@color/primary" />
     </LinearLayout>
 
     <TextView
@@ -58,7 +58,8 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="24dp"
         android:text="Pemerintah Kota Kediri • Siaga 112"
-        android:textColor="#86EFAC"
-        android:textSize="11sp" />
+        android:textColor="@color/text_muted"
+        android:textSize="11.5sp"
+        android:textStyle="bold" />
 
 </RelativeLayout>

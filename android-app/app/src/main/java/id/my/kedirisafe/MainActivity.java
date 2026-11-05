@@ -9,7 +9,10 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.View;
+import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -26,10 +29,18 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -41,8 +52,9 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout layoutError;
     private Button btnRetry;
 
-    // File Chooser for Photo / Camera Uploads
+    // File & Camera Chooser Callback
     private ValueCallback<Uri[]> fileUploadCallback;
+    private Uri cameraImageUri;
 
     // Geolocation Callback
     private GeolocationPermissions.Callback geoCallback;
@@ -51,25 +63,34 @@ public class MainActivity extends AppCompatActivity {
     // Double Back to Exit
     private long backPressedTime = 0;
 
-    // Activity Result Launcher for File Chooser
+    // Activity Result Launcher for File / Camera Chooser
     private final ActivityResultLauncher<Intent> fileChooserLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (fileUploadCallback == null) return;
                 Uri[] results = null;
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    Intent data = result.getData();
-                    if (data.getData() != null) {
-                        results = new Uri[]{ data.getData() };
-                    } else if (data.getClipData() != null) {
-                        int count = data.getClipData().getItemCount();
-                        results = new Uri[count];
-                        for (int i = 0; i < count; i++) {
-                            results[i] = data.getClipData().getItemAt(i).getUri();
+                if (result.getResultCode() == RESULT_OK) {
+                    if (result.getData() == null || result.getData().getData() == null) {
+                        // Hasil dari Kamera
+                        if (cameraImageUri != null) {
+                            results = new Uri[]{ cameraImageUri };
+                        }
+                    } else {
+                        // Hasil dari Galeri / Dokumen
+                        Intent data = result.getData();
+                        if (data.getData() != null) {
+                            results = new Uri[]{ data.getData() };
+                        } else if (data.getClipData() != null) {
+                            int count = data.getClipData().getItemCount();
+                            results = new Uri[count];
+                            for (int i = 0; i < count; i++) {
+                                results[i] = data.getClipData().getItemAt(i).getUri();
+                            }
                         }
                     }
                 }
                 fileUploadCallback.onReceiveValue(results);
                 fileUploadCallback = null;
+                cameraImageUri = null;
             });
 
     // Activity Result Launcher for Location Permission
@@ -81,6 +102,11 @@ public class MainActivity extends AppCompatActivity {
                 if (geoCallback != null) {
                     geoCallback.invoke(geoOrigin, fineGranted || coarseGranted, false);
                     geoCallback = null;
+                }
+
+                // Jika izin diberikan, refresh posisi GPS di webView
+                if ((fineGranted || coarseGranted) && webView != null) {
+                    webView.evaluateJavascript("if(window.requestUserLocation) { window.requestUserLocation(); }", null);
                 }
             });
 
@@ -94,7 +120,10 @@ public class MainActivity extends AppCompatActivity {
         setupSwipeRefresh();
         setupBackNavigation();
 
-        // Load the Kediri Safe Map web app
+        // Minta izin lokasi di awal agar Leaflet GPS langsung aktif secara realtime
+        checkAndRequestLocationPermission();
+
+        // Muat web aplikasi Kediri Safe Map
         loadUrl(TARGET_URL);
     }
 
@@ -112,11 +141,23 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void checkAndRequestLocationPermission() {
+        boolean hasFine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean hasCoarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+        if (!hasFine && !hasCoarse) {
+            locationPermissionLauncher.launch(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            });
+        }
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     private void setupWebView() {
         WebSettings settings = webView.getSettings();
 
-        // Enable JavaScript and modern web capabilities
+        // 1. Kemampuan JavaScript & Storage Modern untuk API Realtime
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
@@ -126,15 +167,22 @@ public class MainActivity extends AppCompatActivity {
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
 
-        // Performance & Cache
+        // 2. Cookie Management (Penting untuk autentikasi & session API)
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        cookieManager.setAcceptThirdPartyCookies(webView, true);
+
+        // 3. Performa & Hardware Acceleration untuk Peta Leaflet 60fps
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        settings.setMediaPlaybackRequiresUserGesture(false);
 
-        // Append custom mobile app identifier to User Agent
+        // 4. Custom User-Agent untuk identifikasi aplikasi Android
         String customUA = settings.getUserAgentString() + " KediriSafeMap-Android/1.0.0";
         settings.setUserAgentString(customUA);
 
-        // WebChromeClient (Geolocation, File Upload, Progress)
+        // WebChromeClient (Geolocation, File Upload / Kamera, Progress Bar)
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
@@ -151,7 +199,6 @@ public class MainActivity extends AppCompatActivity {
                 geoOrigin = origin;
                 geoCallback = callback;
 
-                // Check runtime location permissions
                 boolean hasFine = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
                 boolean hasCoarse = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
 
@@ -172,13 +219,42 @@ public class MainActivity extends AppCompatActivity {
                 }
                 fileUploadCallback = filePathCallback;
 
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("image/*");
-                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                // Intent 1: Buka Kamera Langsung
+                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                File photoFile = null;
+                try {
+                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+                    String imageFileName = "KEDIRI_SAFE_" + timeStamp + "_";
+                    File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+                    if (storageDir == null) storageDir = getCacheDir();
+                    photoFile = File.createTempFile(imageFileName, ".jpg", storageDir);
+                    cameraImageUri = FileProvider.getUriForFile(MainActivity.this, "id.my.kedirisafe.fileprovider", photoFile);
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri);
+                    takePictureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } catch (Exception ex) {
+                    cameraImageUri = null;
+                }
+
+                // Intent 2: Pilih Berkas dari Galeri
+                Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
+                contentSelectionIntent.setType("image/*");
+                contentSelectionIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+
+                List<Intent> intentList = new ArrayList<>();
+                if (photoFile != null) {
+                    intentList.add(takePictureIntent);
+                }
+
+                Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
+                chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
+                chooserIntent.putExtra(Intent.EXTRA_TITLE, "Ambil Foto Bencana / Pilih dari Galeri");
+                if (!intentList.isEmpty()) {
+                    chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentList.toArray(new Intent[0]));
+                }
 
                 try {
-                    fileChooserLauncher.launch(Intent.createChooser(intent, "Pilih Foto Kejadian / Bukti Laporan"));
+                    fileChooserLauncher.launch(chooserIntent);
                     return true;
                 } catch (ActivityNotFoundException e) {
                     fileUploadCallback = null;
@@ -231,12 +307,12 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-                // Keep Kediri Safe Map internal links within the WebView
-                if (url.contains("kedirisafe.my.id") || url.contains("localhost")) {
-                    return false; // let webView load it
+                // Tetap di dalam WebView untuk domain kedirisafe.my.id
+                if (url.contains("kedirisafe.my.id") || url.contains("localhost") || url.contains("127.0.0.1")) {
+                    return false;
                 }
 
-                // Other external links open in external browser
+                // Tautan eksternal lain dibuka di browser eksternal
                 try {
                     Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                     startActivity(browserIntent);
@@ -262,6 +338,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
+                // Hanya tampilkan layar error jika halaman utama gagal dimuat
                 if (request.isForMainFrame()) {
                     swipeRefresh.setRefreshing(false);
                     webView.setVisibility(View.GONE);

@@ -5,3 +5,4 @@
 -keepclassmembers class * extends android.webkit.WebChromeClient {
     public void *(android.webkit.WebView, java.lang.String);
 }
+

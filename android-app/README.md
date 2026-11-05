@@ -43,3 +43,4 @@ Dibuat menggunakan WebView Native teroptimasi dengan dukungan penuh:
 
 ### Langkah 4: Pasang Link Download di Web Kediri Safe Map
 Ganti link unduhan di file `index.html` (bagian kartu "Unduh Aplikasi Android") dengan tautan Mediafire Anda!
+

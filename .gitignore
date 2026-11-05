@@ -27,6 +27,7 @@ desktop.ini
 # Temporary files & caches
 temp/
 tmp/
+scratch/
 *.tmp
 node_modules/
 vendor/
