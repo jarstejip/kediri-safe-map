@@ -2,6 +2,7 @@ package id.my.kedirisafe;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -10,8 +11,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Message;
 import android.provider.MediaStore;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.ValueCallback;
@@ -59,6 +63,9 @@ public class MainActivity extends AppCompatActivity {
     // Geolocation Callback
     private GeolocationPermissions.Callback geoCallback;
     private String geoOrigin;
+
+    // Active OAuth Popup Dialog
+    private Dialog oauthDialog;
 
     // Double Back to Exit
     private long backPressedTime = 0;
@@ -167,22 +174,27 @@ public class MainActivity extends AppCompatActivity {
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
 
-        // 2. Cookie Management (Penting untuk autentikasi & session API)
+        // 2. Dukungan Pop-up Window untuk Google OAuth (GIS Popup Handshake)
+        settings.setSupportMultipleWindows(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+
+        // 3. Cookie Management (Penting untuk autentikasi & session Google / API)
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
         cookieManager.setAcceptThirdPartyCookies(webView, true);
 
-        // 3. Performa & Hardware Acceleration untuk Peta Leaflet 60fps
+        // 4. Performa & Hardware Acceleration untuk Peta Leaflet 60fps
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         settings.setMediaPlaybackRequiresUserGesture(false);
 
-        // 4. Custom User-Agent untuk identifikasi aplikasi Android
-        String customUA = settings.getUserAgentString() + " KediriSafeMap-Android/1.0.0";
-        settings.setUserAgentString(customUA);
+        // 5. User-Agent standar Chrome Mobile (Hapus "; wv" agar Google tidak menolak login OAuth)
+        String defaultUA = settings.getUserAgentString();
+        String cleanUA = defaultUA.replace("; wv", "");
+        settings.setUserAgentString(cleanUA);
 
-        // WebChromeClient (Geolocation, File Upload / Kamera, Progress Bar)
+        // WebChromeClient (Geolocation, File Upload / Kamera, Progress Bar, Pop-up OAuth)
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
@@ -262,6 +274,73 @@ public class MainActivity extends AppCompatActivity {
                     return false;
                 }
             }
+
+            // DUKUNGAN POP-UP GOOGLE SIGN-IN RESMI (GIS POPUP HANDSHAKE)
+            @Override
+            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+                WebView popupWebView = new WebView(MainActivity.this);
+                WebSettings popupSettings = popupWebView.getSettings();
+                popupSettings.setJavaScriptEnabled(true);
+                popupSettings.setDomStorageEnabled(true);
+                popupSettings.setSupportMultipleWindows(true);
+                popupSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+
+                // Gunakan UserAgent bersih tanpa "; wv"
+                popupSettings.setUserAgentString(cleanUA);
+
+                // Pastikan Cookie tersambung
+                CookieManager.getInstance().setAcceptThirdPartyCookies(popupWebView, true);
+
+                oauthDialog = new Dialog(MainActivity.this, android.R.style.Theme_DeviceDefault_Light_NoActionBar_Fullscreen);
+                oauthDialog.setContentView(popupWebView);
+                if (oauthDialog.getWindow() != null) {
+                    oauthDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+                }
+                oauthDialog.show();
+
+                popupWebView.setWebChromeClient(new WebChromeClient() {
+                    @Override
+                    public void onCloseWindow(WebView window) {
+                        if (oauthDialog != null && oauthDialog.isShowing()) {
+                            oauthDialog.dismiss();
+                        }
+                        window.destroy();
+                    }
+                });
+
+                popupWebView.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                        String popUrl = request.getUrl().toString();
+                        // Izinkan alur Google OAuth dan domain internal di dalam pop-up
+                        if (popUrl.contains("accounts.google.com") ||
+                            popUrl.contains("google.com") ||
+                            popUrl.contains("kedirisafe.my.id")) {
+                            return false;
+                        }
+                        return false;
+                    }
+
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        super.onPageFinished(view, url);
+                        // Jika kembali ke halaman login atau berhasil, dialog akan otomatis tertutup oleh GIS
+                    }
+                });
+
+                WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+                transport.setWebView(popupWebView);
+                resultMsg.sendToTarget();
+                return true;
+            }
+
+            @Override
+            public void onCloseWindow(WebView window) {
+                if (oauthDialog != null && oauthDialog.isShowing()) {
+                    oauthDialog.dismiss();
+                }
+                super.onCloseWindow(window);
+            }
         });
 
         // WebViewClient (URL interception & error handling)
@@ -307,8 +386,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-                // Tetap di dalam WebView untuk domain kedirisafe.my.id
-                if (url.contains("kedirisafe.my.id") || url.contains("localhost") || url.contains("127.0.0.1")) {
+                // Tetap di dalam WebView untuk domain kedirisafe.my.id dan autentikasi Google
+                if (url.contains("kedirisafe.my.id") ||
+                    url.contains("accounts.google.com") ||
+                    url.contains("google.com/accounts") ||
+                    url.contains("oauth2") ||
+                    url.contains("localhost") ||
+                    url.contains("127.0.0.1")) {
                     return false;
                 }
 
@@ -363,6 +447,11 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
+                if (oauthDialog != null && oauthDialog.isShowing()) {
+                    oauthDialog.dismiss();
+                    return;
+                }
+
                 if (webView != null && webView.canGoBack()) {
                     webView.goBack();
                 } else {
@@ -401,6 +490,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if (oauthDialog != null && oauthDialog.isShowing()) {
+            oauthDialog.dismiss();
+        }
         if (webView != null) {
             webView.destroy();
         }
