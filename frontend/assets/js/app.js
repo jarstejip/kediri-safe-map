@@ -3959,6 +3959,47 @@ function fallbackCopyNumber(text) {
   if (input.parentNode) input.parentNode.removeChild(input);
 }
 
+// Khusus fitur Kirim Koordinat GPS via WhatsApp menggunakan nomor 082338030891
+function sendGpsWhatsApp() {
+  showToast('📍 Mengambil titik koordinat GPS terkini untuk dikirim via WhatsApp...');
+
+  getLiveGpsLocation((loc) => {
+    const timeStr = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' });
+    const mapsLink = `https://maps.google.com/?q=${loc.lat.toFixed(6)},${loc.lng.toFixed(6)}`;
+    const accText = loc.isFallback ? 'Estimasi Area Kota Kediri' : `Akurasi GPS: ±${loc.accuracy} meter`;
+
+    const msg = 
+`📍 *BAGIKAN TITIK KOORDINAT LOKASI - KEDIRI SAFE MAP*
+--------------------------------------------------
+Halo, saya membagikan titik koordinat lokasi saya saat ini:
+
+📌 *Tautan Google Maps:*
+${mapsLink}
+
+🌐 *Koordinat:* ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}
+🎯 *Status:* ${accText}
+⏰ *Waktu Kirim:* ${timeStr} WIB
+--------------------------------------------------
+Mohon pemantauan atau bantuan jika ada kendala darurat di titik ini. Terima kasih.`;
+
+    const url = `https://wa.me/${WHATSAPP_GPS_TARGET}?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  });
+}
+
+function switchSosSubTab(subtab) {
+  webState.sosSubtab = subtab;
+  document.querySelectorAll('.subtab-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.subtab-content-box').forEach(v => v.classList.remove('active'));
+
+  document.getElementById(`subtab-btn-${subtab}`)?.classList.add('active');
+  document.getElementById(`subtab-view-${subtab}`)?.classList.add('active');
+
+  if (subtab === 'riwayat') {
+    renderWebReportsStack();
+  }
+}
+
 // ---- Report Form Submission ----
 function handleReportSubmit(e) {
   e.preventDefault();
@@ -4697,6 +4738,17 @@ document.addEventListener('DOMContentLoaded', () => {
       toggleNotificationDropdown(e);
     });
   }
+
+  // Bind SOS subtabs explicitly for instant mobile touch response
+  ['hotline', 'lapor', 'riwayat'].forEach(subtab => {
+    const btn = document.getElementById(`subtab-btn-${subtab}`);
+    if (btn) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchSosSubTab(subtab);
+      });
+    }
+  });
   loadStoredProfileData();
   renderWebReportsStack();
   updateNotificationBadge();
