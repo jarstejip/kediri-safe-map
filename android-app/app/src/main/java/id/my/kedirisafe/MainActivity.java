@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
+import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -217,6 +218,9 @@ public class MainActivity extends AppCompatActivity {
         String cleanUA = defaultUA.replace("; wv", "");
         settings.setUserAgentString(cleanUA);
 
+        // 6. Native Android Bridge untuk Fitur SOS & Panggilan Telepon Darurat Langsung
+        webView.addJavascriptInterface(new WebAppInterface(), "AndroidBridge");
+
         // WebChromeClient (Geolocation, File Upload / Kamera, Progress Bar, Pop-up OAuth)
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -367,6 +371,13 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                         String popUrl = request.getUrl().toString();
+                        if (popUrl.startsWith("tel:") || popUrl.startsWith("https://wa.me/") || popUrl.startsWith("whatsapp://")) {
+                            handleUri(popUrl);
+                            if (oauthDialog != null && oauthDialog.isShowing()) {
+                                oauthDialog.dismiss();
+                            }
+                            return true;
+                        }
                         // Izinkan alur Google OAuth dan domain internal di dalam pop-up
                         if (popUrl.contains("accounts.google.com") ||
                             popUrl.contains("google.com") ||
@@ -402,63 +413,13 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                String url = request.getUrl().toString();
+                return handleUri(request.getUrl().toString());
+            }
 
-                // Tel / Phone calls (Siaga 112, RS, Polsek)
-                if (url.startsWith("tel:")) {
-                    Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse(url));
-                    startActivity(intent);
-                    return true;
-                }
-
-                // Mailto
-                if (url.startsWith("mailto:")) {
-                    Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse(url));
-                    startActivity(intent);
-                    return true;
-                }
-
-                // WhatsApp links (wa.me)
-                if (url.startsWith("https://wa.me/") || url.startsWith("whatsapp://")) {
-                    try {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                        startActivity(intent);
-                        return true;
-                    } catch (ActivityNotFoundException e) {
-                        Toast.makeText(MainActivity.this, "Aplikasi WhatsApp tidak ditemukan", Toast.LENGTH_SHORT).show();
-                        return true;
-                    }
-                }
-
-                // Google Maps & Geo
-                if (url.startsWith("geo:") || url.contains("maps.google.com") || url.contains("goo.gl/maps")) {
-                    try {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                        startActivity(intent);
-                        return true;
-                    } catch (Exception e) {
-                        // Fall back to webview if no maps app
-                    }
-                }
-
-                // Tetap di dalam WebView untuk domain kedirisafe.my.id dan autentikasi Google
-                if (url.contains("kedirisafe.my.id") ||
-                    url.contains("accounts.google.com") ||
-                    url.contains("google.com/accounts") ||
-                    url.contains("oauth2") ||
-                    url.contains("localhost") ||
-                    url.contains("127.0.0.1")) {
-                    return false;
-                }
-
-                // Tautan eksternal lain dibuka di browser eksternal
-                try {
-                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    startActivity(browserIntent);
-                    return true;
-                } catch (Exception e) {
-                    return false;
-                }
+            @SuppressWarnings("deprecation")
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return handleUri(url);
             }
 
             @Override
@@ -540,6 +501,130 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
         if (webView != null) {
             webView.onPause();
+        }
+    }
+
+    /**
+     * Intersepsi Skema URL: Panggilan Telepon Darurat (tel:), WhatsApp (wa.me), Email, dan Maps
+     */
+    private boolean handleUri(String url) {
+        if (url == null || url.isEmpty()) return false;
+
+        // 1. Tel / Phone calls (Siaga 112, Polres, RSUD Gambiran, Damkar, BPBD, dll.)
+        if (url.startsWith("tel:")) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse(url));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            } catch (Exception e) {
+                Toast.makeText(MainActivity.this, "Tidak dapat membuka dialer panggilan: " + url, Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        }
+
+        // 2. WhatsApp links (wa.me atau whatsapp://)
+        if (url.startsWith("https://wa.me/") || url.startsWith("http://wa.me/") || url.startsWith("whatsapp://")) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                return true;
+            } catch (ActivityNotFoundException e) {
+                Toast.makeText(MainActivity.this, "Aplikasi WhatsApp tidak ditemukan", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        }
+
+        // 3. Email (mailto:)
+        if (url.startsWith("mailto:")) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse(url));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                return true;
+            } catch (Exception e) {
+                Toast.makeText(MainActivity.this, "Aplikasi email tidak ditemukan", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        }
+
+        // 4. Google Maps & Geolocation Links
+        if (url.startsWith("geo:") || url.contains("maps.google.com") || url.contains("goo.gl/maps")) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                return true;
+            } catch (Exception e) {
+                // Fall back ke webview jika aplikasi maps tidak ada
+            }
+        }
+
+        // 5. Tetap di dalam WebView untuk domain resmi kedirisafe.my.id dan autentikasi Google
+        if (url.contains("kedirisafe.my.id") ||
+            url.contains("accounts.google.com") ||
+            url.contains("google.com/accounts") ||
+            url.contains("oauth2") ||
+            url.contains("localhost") ||
+            url.contains("127.0.0.1")) {
+            return false;
+        }
+
+        // 6. Tautan eksternal lain dibuka di browser eksternal
+        try {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(browserIntent);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Javascript Interface resmi untuk komunikasi native Web -> Android APK
+     */
+    public class WebAppInterface {
+        @JavascriptInterface
+        public void makePhoneCall(String phoneNumber) {
+            runOnUiThread(() -> {
+                if (phoneNumber == null || phoneNumber.trim().isEmpty()) return;
+                try {
+                    String clean = phoneNumber.replaceAll("[^0-9+]", "");
+                    Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + clean));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "Tidak dapat membuka panggilan telepon: " + phoneNumber, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void openWhatsApp(String urlOrPhone, String text) {
+            runOnUiThread(() -> {
+                if (urlOrPhone == null || urlOrPhone.trim().isEmpty()) return;
+                try {
+                    Uri uri;
+                    if (urlOrPhone.startsWith("http://") || urlOrPhone.startsWith("https://") || urlOrPhone.startsWith("whatsapp://")) {
+                        uri = Uri.parse(urlOrPhone);
+                    } else {
+                        String clean = urlOrPhone.replaceAll("[^0-9]", "");
+                        String query = (text != null && !text.isEmpty()) ? "?text=" + Uri.encode(text) : "";
+                        uri = Uri.parse("https://wa.me/" + clean + query);
+                    }
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "Aplikasi WhatsApp tidak ditemukan", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public boolean isAndroidApp() {
+            return true;
         }
     }
 

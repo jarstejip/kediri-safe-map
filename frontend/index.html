@@ -359,62 +359,13 @@
 
         <!-- Interactive Notification Bell Container -->
         <div class="notif-bell-container rel-box" id="notif-bell-container">
-          <button type="button" class="icon-circle-btn" id="btn-navbar-notif" onclick="event.stopPropagation(); toggleNotificationDropdown(event)" title="Notifikasi Sistem Siaga Kediri" aria-label="Notifikasi">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button type="button" class="icon-circle-btn" id="btn-navbar-notif" onclick="toggleNotificationDropdown(event)" title="Notifikasi Sistem Siaga Kediri" aria-label="Notifikasi">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="pointer-events: none;">
               <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
               <path d="M13.73 21a2 2 0 01-3.46 0"/>
             </svg>
-            <span class="badge-red-dot" id="notif-red-badge"></span>
+            <span class="badge-red-dot" id="notif-red-badge" style="pointer-events: none;"></span>
           </button>
-
-          <!-- Notification Dropdown Popover -->
-          <div class="notif-dropdown-card" id="notification-dropdown" style="display: none;" onclick="event.stopPropagation()">
-            <div class="notif-dropdown-header">
-              <div class="notif-header-title-box">
-                <div class="notif-title-row">
-                  <span class="notif-title-main">Notifikasi Siaga</span>
-                  <span class="notif-unread-pill" id="notif-unread-count-pill">3 Baru</span>
-                </div>
-                <span class="notif-title-sub">Pusat kendali dan informasi darurat Kota Kediri</span>
-              </div>
-              <button type="button" class="notif-mark-read-btn" onclick="markAllNotificationsRead()" title="Tandai semua notifikasi sudah dibaca">
-                Tandai Dibaca
-              </button>
-            </div>
-
-            <!-- Live Government Sync Strip (BMKG & BPBD) -->
-            <div class="notif-gov-sync-strip" id="notif-gov-sync-strip">
-              <span class="gov-live-dot"></span>
-              <span class="gov-live-text" id="gov-sync-status-text">Live BMKG &amp; BPBD RI Terhubung</span>
-              <button type="button" class="btn-refresh-gov" onclick="syncGovernmentAlertsNow(true)" title="Sinkronkan data darurat terkini dari BMKG &amp; BPBD">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                <span>Sync</span>
-              </button>
-            </div>
-
-            <!-- Chips Category Filter -->
-            <div class="notif-chips-filter">
-              <button type="button" class="notif-chip active" id="notif-chip-all" onclick="filterNotificationCategory('all', this)">Semua</button>
-              <button type="button" class="notif-chip" id="notif-chip-gov" onclick="filterNotificationCategory('pemerintah', this)">🏛️ Resmi Pemerintah</button>
-              <button type="button" class="notif-chip" id="notif-chip-darurat" onclick="filterNotificationCategory('darurat', this)">Siaga &amp; Darurat</button>
-              <button type="button" class="notif-chip" id="notif-chip-layanan" onclick="filterNotificationCategory('layanan', this)">Layanan Publik</button>
-            </div>
-
-            <!-- Notification Items Scrollable Body -->
-            <div class="notif-items-body" id="notif-items-body">
-              <!-- Rendered dynamically by JS -->
-            </div>
-
-            <!-- Footer Action -->
-            <div class="notif-dropdown-footer">
-              <button type="button" class="notif-footer-link" onclick="closeNotificationDropdown(); switchWebTab('sos');">
-                <span>Buka Layanan Darurat Siaga 112 &amp; SOS</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </button>
-            </div>
-          </div>
         </div>
 
         <div class="user-chip" onclick="switchWebTab('profile')">
@@ -701,6 +652,7 @@
                   <span class="hotline-sec-tag">24 Jam Siaga</span>
                 </div>
 
+                <!-- 1. Kediri Siaga 112 -->
                 <div class="hotline-item-card">
                   <div class="hotline-avatar red-bg">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -709,11 +661,12 @@
                   </div>
                   <div class="hotline-info-box">
                     <div class="hotline-title">Kediri Siaga 112</div>
-                    <div class="hotline-desc">Panggilan Darurat Bebas Pulsa (112)</div>
+                    <div class="hotline-desc">Panggilan Darurat Bebas Pulsa (Ambulans, PMK &amp; Bencana) • 112</div>
                   </div>
-                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('Kediri Siaga 112', '112')">Panggil</button>
+                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('Kediri Siaga 112', '112', 'Panggilan Darurat Terpadu & Bebas Pulsa Kota Kediri')">Panggil</button>
                 </div>
 
+                <!-- 2. Polres Kediri Kota -->
                 <div class="hotline-item-card">
                   <div class="hotline-avatar blue-bg">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -722,11 +675,12 @@
                   </div>
                   <div class="hotline-info-box">
                     <div class="hotline-title">Polres Kediri Kota</div>
-                    <div class="hotline-desc">SPKT &amp; Laka Lantas: (0354) 684351 / 110</div>
+                    <div class="hotline-desc">SPKT &amp; Laka Lantas 24 Jam • (0354) 684351 / 110</div>
                   </div>
-                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('Polres Kediri Kota', '0354684351')">Panggil</button>
+                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('Polres Kediri Kota', '0354684351', 'Sentra Pelayanan Kepolisian Terpadu (SPKT) 24 Jam')">Panggil</button>
                 </div>
 
+                <!-- 3. Damkar Kota Kediri -->
                 <div class="hotline-item-card">
                   <div class="hotline-avatar orange-bg">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -735,9 +689,114 @@
                   </div>
                   <div class="hotline-info-box">
                     <div class="hotline-title">Damkar Kota Kediri</div>
-                    <div class="hotline-desc">Posko PMK &amp; Evakuasi: (0354) 671756 / 113</div>
+                    <div class="hotline-desc">Posko PMK &amp; Evakuasi Satwa/Bencana • (0354) 671756 / 113</div>
                   </div>
-                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('Damkar Kota Kediri', '0354671756')">Panggil</button>
+                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('Damkar Kota Kediri', '0354671756', 'Pemadam Kebakaran & Evakuasi Cepat Kota Kediri')">Panggil</button>
+                </div>
+
+                <!-- 4. BPBD Kota Kediri -->
+                <div class="hotline-item-card">
+                  <div class="hotline-avatar blue-bg">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                    </svg>
+                  </div>
+                  <div class="hotline-info-box">
+                    <div class="hotline-title">BPBD Kota Kediri</div>
+                    <div class="hotline-desc">Posko Bencana &amp; Luapan Kali Brantas • (0354) 689816</div>
+                  </div>
+                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('BPBD Kota Kediri', '0354689816', 'Posko Siaga Bencana Daerah & Tanggap Darurat Kota Kediri')">Panggil</button>
+                </div>
+
+                <!-- 5. PMI Kota Kediri -->
+                <div class="hotline-item-card">
+                  <div class="hotline-avatar red-bg">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/>
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </div>
+                  <div class="hotline-info-box">
+                    <div class="hotline-title">PMI Kota Kediri</div>
+                    <div class="hotline-desc">Ambulans Gawat Darurat &amp; Donor Darah 24 Jam • (0354) 682470</div>
+                  </div>
+                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('PMI Kota Kediri', '0354682470', 'Layanan Ambulans Gawat Darurat & Bank Darah PMI Kota Kediri')">Panggil</button>
+                </div>
+
+                <!-- 6. RSUD Gambiran Kota Kediri -->
+                <div class="hotline-item-card">
+                  <div class="hotline-avatar green-bg">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                  </div>
+                  <div class="hotline-info-box">
+                    <div class="hotline-title">RSUD Gambiran Kota Kediri</div>
+                    <div class="hotline-desc">Instalasi Gawat Darurat (IGD 24 Jam) • (0354) 2891300</div>
+                  </div>
+                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('RSUD Gambiran Kota Kediri', '03542891300', 'IGD & Rujukan Medis Gawat Darurat RSUD Gambiran')">Panggil</button>
+                </div>
+
+                <!-- 7. RS Bhayangkara Kediri -->
+                <div class="hotline-item-card">
+                  <div class="hotline-avatar blue-bg">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                    </svg>
+                  </div>
+                  <div class="hotline-info-box">
+                    <div class="hotline-title">RS Bhayangkara Kediri</div>
+                    <div class="hotline-desc">IGD Trauma Center &amp; Ambulans 24 Jam • (0354) 671100</div>
+                  </div>
+                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('RS Bhayangkara Kediri', '0354671100', 'Trauma Center & IGD 24 Jam RS Bhayangkara Kediri')">Panggil</button>
+                </div>
+
+                <!-- 8. Polsek Kediri Kota -->
+                <div class="hotline-item-card">
+                  <div class="hotline-avatar purple-bg">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  </div>
+                  <div class="hotline-info-box">
+                    <div class="hotline-title">Polsek Kediri Kota</div>
+                    <div class="hotline-desc">Posko Keamanan &amp; Kamtibmas Wilayah Kota • (0354) 681313</div>
+                  </div>
+                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('Polsek Kediri Kota', '0354681313', 'Posko Keamanan Polsek Kediri Kota')">Panggil</button>
+                </div>
+
+                <!-- 9. PLN Gangguan Listrik Kediri -->
+                <div class="hotline-item-card">
+                  <div class="hotline-avatar yellow-bg">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                  </div>
+                  <div class="hotline-info-box">
+                    <div class="hotline-title">PLN Gangguan Listrik Kediri</div>
+                    <div class="hotline-desc">Bahaya Korsleting, Tiang Tumbang &amp; Padam • 123 / (0354) 123</div>
+                  </div>
+                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('PLN Gangguan Listrik Kediri', '123', 'Call Center PLN Gangguan Listrik & Korsleting')">Panggil</button>
+                </div>
+
+                <!-- 10. SAR / Basarnas Pos Kediri -->
+                <div class="hotline-item-card">
+                  <div class="hotline-avatar orange-bg">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <circle cx="12" cy="12" r="4"/>
+                      <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/>
+                      <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/>
+                      <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/>
+                      <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>
+                    </svg>
+                  </div>
+                  <div class="hotline-info-box">
+                    <div class="hotline-title">SAR / Basarnas Kediri</div>
+                    <div class="hotline-desc">Pencarian, Pertolongan &amp; Evakuasi Air • 115</div>
+                  </div>
+                  <button type="button" class="btn-call-red" onclick="makeEmergencyCall('SAR / Basarnas Kediri', '115', 'Operasi SAR & Pertolongan Evakuasi Darurat')">Panggil</button>
                 </div>
 
                 <!-- Featured Report Status Stepper (Dynamic) -->
@@ -1450,6 +1509,99 @@
       </div>
       <div class="modal-form-actions" style="padding: 12px 20px; background: #f8fafc; margin: 0; justify-content: flex-end;">
         <button type="button" class="btn-modal-cancel" onclick="closeDownloadAppModal()">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 7: PUSAT NOTIFIKASI SIAGA KEDIRI (Pop-up Real-time Web & APK)
+       ======================================================== -->
+  <div id="notification-dropdown" class="oauth-modal-overlay" onclick="if(event.target===this) closeNotificationDropdown()">
+    <div class="profile-modal-card notif-center-modal" style="max-width: 480px; width: 100%; max-height: 86vh; display: flex; flex-direction: column; overflow: hidden; border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.35); background: var(--card-bg, #ffffff);">
+      <div class="notif-dropdown-header" style="padding: 16px 18px 14px; border-bottom: 1px solid var(--border-light, #f1f5f9); display: flex; align-items: flex-start; justify-content: space-between; background: var(--card-bg, #ffffff);">
+        <div class="notif-header-title-box">
+          <div class="notif-title-row" style="display: flex; align-items: center; gap: 8px;">
+            <span class="notif-title-main" style="font-size: 16px; font-weight: 800; color: var(--text-dark, #0f172a);">🔔 Notifikasi Siaga</span>
+            <span class="notif-unread-pill" id="notif-unread-count-pill" style="font-size: 11px; font-weight: 700; color: #15803d; background: #dcfce7; padding: 2px 8px; border-radius: 9999px;">3 Baru</span>
+          </div>
+          <span class="notif-title-sub" style="font-size: 11.5px; color: var(--text-muted, #64748b); display: block; margin-top: 3px;">Pusat kendali dan informasi darurat Kota Kediri</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="notif-mark-read-btn" onclick="markAllNotificationsRead()" title="Tandai semua notifikasi sudah dibaca" style="font-size: 11.5px; font-weight: 700; color: #2563eb; background: none; border: none; cursor: pointer; padding: 4px 6px;">
+            Tandai Dibaca
+          </button>
+          <button type="button" class="btn-close-modal" onclick="closeNotificationDropdown()" style="width: 30px; height: 30px; font-size: 14px; border-radius: 50%; border: 1px solid var(--border-light, #e2e8f0); background: var(--body-bg, #f8fafc); color: var(--text-dark, #0f172a); cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+        </div>
+      </div>
+
+      <!-- Live Government Sync Strip (BMKG & BPBD) -->
+      <div class="notif-gov-sync-strip" id="notif-gov-sync-strip">
+        <span class="gov-live-dot"></span>
+        <span class="gov-live-text" id="gov-sync-status-text">Live BMKG &amp; BPBD RI Terhubung</span>
+        <button type="button" class="btn-refresh-gov" onclick="syncGovernmentAlertsNow(true)" title="Sinkronkan data darurat terkini dari BMKG &amp; BPBD">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span>Sync</span>
+        </button>
+      </div>
+
+      <!-- Chips Category Filter -->
+      <div class="notif-chips-filter">
+        <button type="button" class="notif-chip active" id="notif-chip-all" onclick="filterNotificationCategory('all', this)">Semua</button>
+        <button type="button" class="notif-chip" id="notif-chip-gov" onclick="filterNotificationCategory('pemerintah', this)">🏛️ Resmi Pemerintah</button>
+        <button type="button" class="notif-chip" id="notif-chip-darurat" onclick="filterNotificationCategory('darurat', this)">🚨 Siaga &amp; Darurat</button>
+        <button type="button" class="notif-chip" id="notif-chip-layanan" onclick="filterNotificationCategory('layanan', this)">📋 Layanan Publik</button>
+      </div>
+
+      <!-- Notification Items Scrollable Body -->
+      <div class="notif-items-body" id="notif-items-body" style="flex: 1; overflow-y: auto; max-height: 400px; padding: 10px 14px;">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+      <!-- Footer Action -->
+      <div class="notif-dropdown-footer" style="padding: 12px 18px; border-top: 1px solid var(--border-light, #f1f5f9); background: var(--card-bg, #ffffff);">
+        <button type="button" class="notif-footer-link" onclick="closeNotificationDropdown(); switchWebTab('sos');" style="display: flex; align-items: center; justify-content: space-between; width: 100%; border: none; background: #f0fdf4; color: #15803d; font-weight: 700; font-size: 13px; padding: 10px 14px; border-radius: 12px; cursor: pointer;">
+          <span>🚨 Buka Layanan Darurat Siaga 112 &amp; SOS</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 8: DIALER PANGGILAN DARURAT CEPAT (SOS QUICK DIAL)
+       ======================================================== -->
+  <div id="modal-sos-dial" class="oauth-modal-overlay" onclick="if(event.target===this) closeSosDialModal()">
+    <div class="profile-modal-card" style="max-width: 420px; width: 100%; text-align: center; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.35); background: #ffffff;">
+      <div class="oauth-modal-header" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: #ffffff; padding: 16px 20px;">
+        <div class="oauth-title-group" style="text-align: left;">
+          <span class="oauth-modal-title" style="color:#ffffff; font-size: 16px; font-weight: 800;">🚨 Panggilan Darurat Kediri</span>
+          <span class="oauth-modal-sub" style="color:#fecaca; font-size: 12px;">Layanan Siaga Cepat 24 Jam</span>
+        </div>
+        <button type="button" class="btn-close-modal" style="color:#ffffff; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer;" onclick="closeSosDialModal()">✕</button>
+      </div>
+      <div class="modal-form-body" style="padding: 24px 20px;">
+        <div style="width: 68px; height: 68px; border-radius: 50%; background: #fee2e2; border: 3px solid #f87171; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 30px; box-shadow: 0 4px 14px rgba(220,38,38,0.25);">
+          📞
+        </div>
+        <h4 id="sos-dial-name" style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 6px;">Kediri Siaga 112</h4>
+        <div id="sos-dial-number" style="font-size: 26px; font-weight: 900; color: #dc2626; letter-spacing: 1px; margin-bottom: 8px;">112</div>
+        <p id="sos-dial-desc" style="font-size: 12.5px; color: #64748b; margin: 0 0 20px; line-height: 1.5;">Panggilan darurat bebas pulsa untuk ambulans gawat darurat, kebakaran, dan bencana di wilayah Kota Kediri.</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <a id="sos-dial-btn-call" href="tel:112" class="btn-call-red" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 48px; font-size: 15px; font-weight: 800; text-decoration: none; border-radius: 14px; box-shadow: 0 4px 14px rgba(220,38,38,0.35);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+            <span>Panggil Sekarang (Buka Dialer HP)</span>
+          </a>
+          <button type="button" onclick="copySosDialNumber()" class="btn-outline-pill" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; font-size: 13.5px; font-weight: 700; border-radius: 14px; background: #f8fafc; border: 1.5px solid #cbd5e1; color: #334155; cursor: pointer;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            <span>Salin Nomor Telepon</span>
+          </button>
+        </div>
+      </div>
+      <div class="modal-form-actions" style="padding: 12px 20px; background: #f8fafc; margin: 0; justify-content: flex-end;">
+        <button type="button" class="btn-modal-cancel" onclick="closeSosDialModal()">Tutup</button>
       </div>
     </div>
   </div>

@@ -769,6 +769,11 @@ body.dark-theme .auth-alert.danger {
   position: absolute;
   top: 6px;
   right: 10px;
+  pointer-events: none;
+}
+
+.icon-circle-btn svg {
+  pointer-events: none;
 }
 
 .navbar-right {
@@ -1381,6 +1386,9 @@ body.dark-theme .auth-alert.danger {
 .red-bg { background: #fee2e2; color: #dc2626; }
 .blue-bg { background: #dbeafe; color: #2563eb; }
 .orange-bg { background: #ffedd5; color: #ea580c; }
+.green-bg { background: #dcfce7; color: #16a34a; }
+.purple-bg { background: #f3e8ff; color: #9333ea; }
+.yellow-bg { background: #fef9c3; color: #ca8a04; }
 
 .hotline-info-box {
   flex: 1;
@@ -2662,6 +2670,20 @@ body.dark-theme .auth-alert.danger {
 /* ========================================================
    NOTIFICATION POPOVER DROPDOWN (Sistem & Siaga Kediri)
    ======================================================== */
+.notif-center-modal {
+  width: 100%;
+  max-width: 480px;
+  max-height: 86vh;
+  background: var(--card-bg, #ffffff);
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border-light, #e2e8f0);
+  animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .notif-bell-container {
   position: relative;
   display: flex;
@@ -4694,7 +4716,7 @@ body.dark-theme .auth-alert.danger {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    z-index: 50 !important;
+    z-index: 1000 !important;
     box-sizing: border-box !important;
   }
   

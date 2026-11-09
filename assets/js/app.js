@@ -1942,12 +1942,10 @@ function handleSaveEmergencyContact(e) {
 }
 
 function callEmergencyFamilyContact() {
-  const phone = webState.emergencyContact?.phone || '081234455667';
-  const cleanPhone = phone.replace(/[^0-9+]/g, '');
-  showToast(`📞 Menghubungi kontak darurat keluarga: ${webState.emergencyContact.name}...`);
-  setTimeout(() => {
-    window.location.href = `tel:${cleanPhone}`;
-  }, 400);
+  const ec = webState.emergencyContact || {};
+  const name = ec.name || 'Kontak Darurat Keluarga';
+  const phone = ec.phone || '081234455667';
+  makeEmergencyCall(name, phone, 'Kontak darurat prioritas keluarga Anda.');
 }
 
 function sendEmergencyFamilyWhatsApp() {
@@ -3849,58 +3847,116 @@ function getLiveGpsLocation(callback) {
   );
 }
 
+// ---- Panggilan Darurat & SOS Call Helpers (Realtime Web & Android APK) ----
+function performDialCall(number, name) {
+  const cleanNumber = String(number || '').replace(/[^0-9+]/g, '');
+  if (!cleanNumber) return;
+
+  // 1. Prioritas Native Android APK (Bridge langsung ke dialer HP via Intent ACTION_DIAL)
+  try {
+    if (window.AndroidBridge && typeof window.AndroidBridge.makePhoneCall === 'function') {
+      window.AndroidBridge.makePhoneCall(cleanNumber);
+      return;
+    }
+  } catch (e) {
+    console.warn('AndroidBridge call error:', e);
+  }
+
+  // 2. Mobile Browser & Web (Eksekusi sinkron dalam user gesture token)
+  try {
+    const a = document.createElement('a');
+    a.href = `tel:${cleanNumber}`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { if (a.parentNode) a.parentNode.removeChild(a); }, 250);
+  } catch (err) {
+    window.location.href = `tel:${cleanNumber}`;
+  }
+}
+
+function makeEmergencyCall(name, number, desc = '') {
+  if (!number) return;
+  const cleanNumber = String(number).replace(/[^0-9+]/g, '');
+
+  showToast(`🚨 Menghubungi ${name} (${cleanNumber})...`);
+
+  // Buka modal kartu darurat (sangat membantu di desktop & tablet untuk salin nomor)
+  openSosDialModal(name, cleanNumber, desc);
+
+  // Jalankan panggilan langsung
+  performDialCall(cleanNumber, name);
+}
+
 function triggerSosCall() {
   if (navigator.vibrate) {
-    navigator.vibrate([300, 150, 300, 150, 500]);
+    try {
+      navigator.vibrate([300, 150, 300, 150, 500]);
+    } catch (e) {}
   }
-  showToast('🚨 PANGGILAN DARURAT: Menghubungi Siaga 112 Kota Kediri...');
-  setTimeout(() => {
-    window.location.href = 'tel:112';
-  }, 400);
+  makeEmergencyCall('Kediri Siaga 112', '112', 'Panggilan Darurat Bebas Pulsa 24 Jam Kota Kediri (Ambulans, Damkar & BPBD)');
 }
 
-// Khusus fitur Kirim Koordinat GPS via WhatsApp menggunakan nomor 082338030891
-function sendGpsWhatsApp() {
-  showToast('📍 Mengambil titik koordinat GPS terkini untuk dikirim via WhatsApp...');
+function openSosDialModal(name, number, desc = '') {
+  const modal = document.getElementById('modal-sos-dial');
+  if (!modal) return;
 
-  getLiveGpsLocation((loc) => {
-    const timeStr = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' });
-    const mapsLink = `https://maps.google.com/?q=${loc.lat.toFixed(6)},${loc.lng.toFixed(6)}`;
-    const accText = loc.isFallback ? 'Estimasi Area Kota Kediri' : `Akurasi GPS: ±${loc.accuracy} meter`;
+  const nameEl = document.getElementById('sos-dial-name');
+  const numEl = document.getElementById('sos-dial-number');
+  const descEl = document.getElementById('sos-dial-desc');
+  const btnCall = document.getElementById('sos-dial-btn-call');
 
-    const msg = 
-`📍 *BAGIKAN TITIK KOORDINAT LOKASI - KEDIRI SAFE MAP*
---------------------------------------------------
-Halo, saya membagikan titik koordinat lokasi saya saat ini:
+  if (nameEl) nameEl.textContent = name;
+  if (numEl) numEl.textContent = number;
+  if (descEl) descEl.textContent = desc || `Layanan panggilan darurat resmi untuk wilayah Kota Kediri.`;
+  if (btnCall) {
+    btnCall.href = `tel:${number}`;
+    btnCall.onclick = (e) => {
+      e.preventDefault();
+      performDialCall(number, name);
+    };
+  }
 
-📌 *Tautan Google Maps:*
-${mapsLink}
-
-🌐 *Koordinat:* ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}
-🎯 *Status:* ${accText}
-⏰ *Waktu Kirim:* ${timeStr} WIB
---------------------------------------------------
-Mohon pemantauan atau bantuan jika ada kendala darurat di titik ini. Terima kasih.`;
-
-    const url = `https://wa.me/${WHATSAPP_GPS_TARGET}?text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank');
-  });
+  modal.classList.add('active');
+  modal.style.display = 'flex';
 }
 
-function switchSosSubTab(subtab) {
-  webState.sosSubtab = subtab;
-  document.querySelectorAll('.subtab-item').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.subtab-content-box').forEach(v => v.classList.remove('active'));
-
-  document.getElementById(`subtab-btn-${subtab}`)?.classList.add('active');
-  document.getElementById(`subtab-view-${subtab}`)?.classList.add('active');
+function closeSosDialModal() {
+  const modal = document.getElementById('modal-sos-dial');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
 }
 
-function makeEmergencyCall(name, number) {
-  showToast(`Menghubungi ${name} (${number})...`);
-  setTimeout(() => {
-    window.location.href = `tel:${number}`;
-  }, 400);
+function copySosDialNumber() {
+  const numEl = document.getElementById('sos-dial-number');
+  const num = numEl ? numEl.textContent.trim() : '';
+  if (!num) return;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(num).then(() => {
+      showToast(`✓ Nomor ${num} berhasil disalin ke clipboard!`);
+    }).catch(() => {
+      fallbackCopyNumber(num);
+    });
+  } else {
+    fallbackCopyNumber(num);
+  }
+}
+
+function fallbackCopyNumber(text) {
+  const input = document.createElement('input');
+  input.value = text;
+  document.body.appendChild(input);
+  input.select();
+  try {
+    document.execCommand('copy');
+    showToast(`✓ Nomor ${text} berhasil disalin!`);
+  } catch (e) {
+    showToast(`Nomor: ${text}`);
+  }
+  if (input.parentNode) input.parentNode.removeChild(input);
 }
 
 // ---- Report Form Submission ----
@@ -4299,24 +4355,40 @@ function filterNotificationCategory(category, chipEl) {
 }
 
 function toggleNotificationDropdown(e) {
-  if (e && e.stopPropagation) e.stopPropagation();
-  const dropdown = document.getElementById('notification-dropdown');
-  if (!dropdown) return;
+  if (e) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (e.preventDefault) e.preventDefault();
+  }
+  const modal = document.getElementById('notification-dropdown');
+  if (!modal) return;
 
-  const isVisible = dropdown.style.display === 'flex';
+  const isVisible = modal.classList.contains('active') || modal.style.display === 'flex';
   if (isVisible) {
     closeNotificationDropdown();
   } else {
-    dropdown.style.display = 'flex';
-    renderNotifications(currentNotifFilter);
-    updateNotificationBadge();
+    openNotificationDropdown();
   }
 }
 
-function closeNotificationDropdown() {
-  const dropdown = document.getElementById('notification-dropdown');
-  if (dropdown) dropdown.style.display = 'none';
+function openNotificationDropdown() {
+  const modal = document.getElementById('notification-dropdown');
+  if (!modal) return;
+  modal.classList.add('active');
+  modal.style.display = 'flex';
+  renderNotifications(currentNotifFilter);
+  updateNotificationBadge();
 }
+
+function closeNotificationDropdown() {
+  const modal = document.getElementById('notification-dropdown');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+}
+
+const openNotificationModal = openNotificationDropdown;
+const closeNotificationModal = closeNotificationDropdown;
 
 function markAllNotificationsRead() {
   webState.notifications.forEach(n => { n.unread = false; });
@@ -4602,16 +4674,29 @@ async function syncDatabaseReports() {
   } catch (e) {}
 }
 
-// Global outside-click listener to auto-close notification dropdown
+// Global outside-click listener to auto-close notification modal
 document.addEventListener('click', (event) => {
-  const container = document.getElementById('notif-bell-container');
-  if (container && !container.contains(event.target)) {
-    closeNotificationDropdown();
+  const modal = document.getElementById('notification-dropdown');
+  const btn = document.getElementById('btn-navbar-notif');
+  if (modal && (modal.classList.contains('active') || modal.style.display === 'flex')) {
+    const card = modal.querySelector('.notif-center-modal') || modal.firstElementChild;
+    if (card && !card.contains(event.target) && btn && !btn.contains(event.target)) {
+      closeNotificationDropdown();
+    }
   }
 });
 
 // ---- Initialization ----
 document.addEventListener('DOMContentLoaded', () => {
+  // Bind notif bell button explicitly for guaranteed mobile touch and click responsiveness
+  const notifBtn = document.getElementById('btn-navbar-notif');
+  if (notifBtn) {
+    notifBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleNotificationDropdown(e);
+    });
+  }
   loadStoredProfileData();
   renderWebReportsStack();
   updateNotificationBadge();
