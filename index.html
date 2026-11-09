@@ -241,12 +241,22 @@
 
             <!-- Action Controls -->
             <div class="face-scanner-actions">
+              <!-- Input Kamera Langsung (Fallback jika browser membatasi WebRTC) -->
+              <input type="file" id="face-camera-file-input" accept="image/*" capture="user" style="display:none;" onchange="handleDirectFacePhoto(this)">
+
               <button type="button" class="btn-face-action" id="btn-start-camera" onclick="startFaceCamera()">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
                   <circle cx="12" cy="13" r="4"/>
                 </svg>
                 <span>Buka Kamera &amp; Scan Wajah</span>
+              </button>
+              <button type="button" class="btn-face-action" id="btn-direct-camera" style="display:none; background:#0284c7; border-color:#0284c7;" onclick="triggerDirectFaceCamera()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+                <span>Ambil Foto Selfie Langsung</span>
               </button>
               <button type="button" class="btn-face-capture" id="btn-capture-face" style="display:none;" onclick="captureAndVerifyFace()">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">

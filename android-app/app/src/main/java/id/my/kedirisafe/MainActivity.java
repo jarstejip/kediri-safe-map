@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
+import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -66,6 +67,23 @@ public class MainActivity extends AppCompatActivity {
 
     // Active OAuth Popup Dialog
     private Dialog oauthDialog;
+
+    // WebRTC Camera Permission Request (Biometrik Wajah)
+    private PermissionRequest pendingWebPermissionRequest;
+
+    // Activity Result Launcher for Camera Permission (Langsung Munculkan Pop-up Izin Android)
+    private final ActivityResultLauncher<String> cameraPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (pendingWebPermissionRequest != null) {
+                    if (isGranted) {
+                        pendingWebPermissionRequest.grant(pendingWebPermissionRequest.getResources());
+                    } else {
+                        pendingWebPermissionRequest.deny();
+                        Toast.makeText(MainActivity.this, "Izin kamera diperlukan untuk verifikasi biometrik wajah.", Toast.LENGTH_SHORT).show();
+                    }
+                    pendingWebPermissionRequest = null;
+                }
+            });
 
     // Double Back to Exit
     private long backPressedTime = 0;
@@ -127,8 +145,8 @@ public class MainActivity extends AppCompatActivity {
         setupSwipeRefresh();
         setupBackNavigation();
 
-        // Minta izin lokasi di awal agar Leaflet GPS langsung aktif secara realtime
-        checkAndRequestLocationPermission();
+        // Minta izin lokasi & kamera langsung muncul pop-up di awal agar peta dan biometrik langsung siap
+        checkAndRequestInitialPermissions();
 
         // Muat web aplikasi Kediri Safe Map
         loadUrl(TARGET_URL);
@@ -148,15 +166,20 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void checkAndRequestLocationPermission() {
-        boolean hasFine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        boolean hasCoarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    private void checkAndRequestInitialPermissions() {
+        List<String> permissions = new ArrayList<>();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.CAMERA);
+        }
 
-        if (!hasFine && !hasCoarse) {
-            locationPermissionLauncher.launch(new String[]{
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-            });
+        if (!permissions.isEmpty()) {
+            locationPermissionLauncher.launch(permissions.toArray(new String[0]));
         }
     }
 
@@ -222,6 +245,38 @@ public class MainActivity extends AppCompatActivity {
                             Manifest.permission.ACCESS_COARSE_LOCATION
                     });
                 }
+            }
+
+            // RESPON RESMI PERMISSION KAMERA WEBRTC (BIOMETRIK FACE SCAN)
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                MainActivity.this.runOnUiThread(() -> {
+                    boolean needsCamera = false;
+                    for (String resource : request.getResources()) {
+                        if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) {
+                            needsCamera = true;
+                            break;
+                        }
+                    }
+
+                    if (needsCamera) {
+                        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                            request.grant(request.getResources());
+                        } else {
+                            // Langsung tampilkan pop-up izin kamera Android
+                            pendingWebPermissionRequest = request;
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA);
+                        }
+                    } else {
+                        request.grant(request.getResources());
+                    }
+                });
+            }
+
+            @Override
+            public void onPermissionRequestCanceled(PermissionRequest request) {
+                pendingWebPermissionRequest = null;
+                super.onPermissionRequestCanceled(request);
             }
 
             @Override

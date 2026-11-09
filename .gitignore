@@ -29,6 +29,7 @@ temp/
 tmp/
 scratch/
 *.tmp
+*.apk
 node_modules/
 vendor/
 

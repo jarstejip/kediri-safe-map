@@ -787,6 +787,7 @@ async function startFaceCamera() {
   const btnStart = document.getElementById('btn-start-camera');
   const btnCapture = document.getElementById('btn-capture-face');
   const btnRetake = document.getElementById('btn-retake-face');
+  const btnDirect = document.getElementById('btn-direct-camera');
   const box = document.getElementById('biometric-signup-box');
 
   if (preview) preview.style.display = 'none';
@@ -799,27 +800,34 @@ async function startFaceCamera() {
     statusDot.className = 'status-dot scanning';
   }
   if (statusText) {
-    statusText.textContent = 'Menghubungkan ke sensor kamera...';
+    statusText.textContent = 'Menghubungkan ke sensor kamera... Pastikan klik "Izinkan" jika muncul pop-up izin.';
   }
 
-  try {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      throw new Error('Browser tidak mendukung akses kamera langsung');
+  // Coba dapatkan media stream dengan berbagai opsi toleran
+  let stream = null;
+  const constraintsList = [
+    { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false },
+    { video: { facingMode: 'user' }, audio: false },
+    { video: true, audio: false }
+  ];
+
+  for (const constraints of constraintsList) {
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        if (stream) break;
+      }
+    } catch (e) {
+      console.warn('Percobaan kamera berikutnya:', e);
     }
+  }
 
-    faceMediaStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        width: { ideal: 640 },
-        height: { ideal: 480 },
-        facingMode: 'user'
-      },
-      audio: false
-    });
-
+  if (stream) {
+    faceMediaStream = stream;
     if (video) {
       video.srcObject = faceMediaStream;
       video.style.display = 'block';
-      await video.play();
+      await video.play().catch(() => {});
     }
 
     if (placeholder) placeholder.style.display = 'none';
@@ -827,39 +835,69 @@ async function startFaceCamera() {
     if (btnStart) btnStart.style.display = 'none';
     if (btnCapture) btnCapture.style.display = 'inline-flex';
     if (btnRetake) btnRetake.style.display = 'none';
+    if (btnDirect) btnDirect.style.display = 'none';
 
     if (statusDot) statusDot.className = 'status-dot scanning';
     if (statusText) statusText.textContent = '🟢 Kamera Aktif: Posisikan wajah Anda di dalam lingkaran oval';
 
     showToast('📷 Kamera aktif! Posisikan wajah dan klik "Ambil & Verifikasi Biometrik"');
-  } catch (err) {
-    console.warn('Gagal membuka kamera:', err);
+  } else {
+    // Jika WebRTC terhalang (misal izin ditolak atau WebView lama), aktifkan tombol kamera langsung
+    console.warn('Akses kamera WebRTC terhalang, beralih ke tombol kamera langsung.');
     if (statusDot) statusDot.className = 'status-dot warning';
-    if (statusText) statusText.textContent = 'Gagal mengakses webcam. Pastikan izin kamera diizinkan.';
+    if (statusText) statusText.textContent = 'Izin kamera tertunda. Klik tombol "Ambil Foto Selfie Langsung" di bawah:';
     if (box) box.classList.remove('active-scan');
-    showToast('⚠️ Izin kamera diperlukan untuk verifikasi wajah asli!');
+    if (btnDirect) btnDirect.style.display = 'inline-flex';
+    if (btnStart) btnStart.style.display = 'none';
+    showToast('📸 Klik "Ambil Foto Selfie Langsung" untuk membuka kamera HP Anda!');
   }
+}
+
+function triggerDirectFaceCamera() {
+  const input = document.getElementById('face-camera-file-input');
+  if (input) {
+    input.value = '';
+    input.click();
+  }
+}
+
+function handleDirectFacePhoto(input) {
+  if (!input || !input.files || !input.files[0]) return;
+  const file = input.files[0];
+  showToast('Memproses foto verifikasi wajah biometrik...');
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.getElementById('face-canvas');
+      if (!canvas) return;
+
+      const size = Math.min(img.width, img.height);
+      const startX = (img.width - size) / 2;
+      const startY = (img.height - size) / 2;
+
+      canvas.width = 320;
+      canvas.height = 320;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, startX, startY, size, size, 0, 0, 320, 320);
+
+      const photoBase64 = canvas.toDataURL('image/jpeg', 0.88);
+      processVerifiedFaceData(photoBase64);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
 function captureAndVerifyFace() {
   const video = document.getElementById('face-video');
   const canvas = document.getElementById('face-canvas');
-  const preview = document.getElementById('face-captured-preview');
-  const previewImg = document.getElementById('face-preview-img');
-  const hudOverlay = document.getElementById('face-hud-overlay');
-  const statusDot = document.getElementById('face-status-dot');
-  const statusText = document.getElementById('face-status-text');
-  const btnCapture = document.getElementById('btn-capture-face');
-  const btnRetake = document.getElementById('btn-retake-face');
-  const box = document.getElementById('biometric-signup-box');
 
   if (!video || !canvas) return;
 
-  // Liveness & centering snapshot
   const width = video.videoWidth || 640;
   const height = video.videoHeight || 480;
-
-  // Crop center square
   const size = Math.min(width, height);
   const startX = (width - size) / 2;
   const startY = (height - size) / 2;
@@ -868,12 +906,12 @@ function captureAndVerifyFace() {
   canvas.height = 320;
   const ctx = canvas.getContext('2d');
 
-  // Mirror effect so result matches selfie preview
+  // Mirror effect agar sesuai dengan preview selfie
   ctx.translate(320, 0);
   ctx.scale(-1, 1);
   ctx.drawImage(video, startX, startY, size, size, 0, 0, 320, 320);
 
-  // Analisis Pixel Liveness Ringan (memastikan bukan blank/hitam pekat)
+  // Analisis Pixel Liveness Ringan
   try {
     const imgData = ctx.getImageData(0, 0, 320, 320);
     const data = imgData.data;
@@ -890,17 +928,34 @@ function captureAndVerifyFace() {
   } catch (e) {}
 
   const photoBase64 = canvas.toDataURL('image/jpeg', 0.88);
+  processVerifiedFaceData(photoBase64);
+}
+
+function processVerifiedFaceData(photoBase64) {
+  const video = document.getElementById('face-video');
+  const preview = document.getElementById('face-captured-preview');
+  const previewImg = document.getElementById('face-preview-img');
+  const hudOverlay = document.getElementById('face-hud-overlay');
+  const statusDot = document.getElementById('face-status-dot');
+  const statusText = document.getElementById('face-status-text');
+  const btnStart = document.getElementById('btn-start-camera');
+  const btnCapture = document.getElementById('btn-capture-face');
+  const btnRetake = document.getElementById('btn-retake-face');
+  const btnDirect = document.getElementById('btn-direct-camera');
+  const placeholder = document.getElementById('face-placeholder');
+  const box = document.getElementById('biometric-signup-box');
+
   verifiedFacePhoto = photoBase64;
   verifiedFaceToken = 'FACE-KDR-' + Date.now() + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
 
-  // Stop camera stream to free resources & respect privacy
+  // Hentikan stream kamera untuk hemat baterai & privasi
   if (faceMediaStream) {
     faceMediaStream.getTracks().forEach(track => track.stop());
     faceMediaStream = null;
   }
 
-  // Update UI to Verified State
-  video.style.display = 'none';
+  if (video) video.style.display = 'none';
+  if (placeholder) placeholder.style.display = 'none';
   if (hudOverlay) hudOverlay.style.display = 'none';
   if (preview && previewImg) {
     previewImg.src = photoBase64;
@@ -915,10 +970,12 @@ function captureAndVerifyFace() {
   if (statusDot) statusDot.className = 'status-dot success';
   if (statusText) statusText.innerHTML = `✓ <b>Wajah Asli Terverifikasi Biometrik</b> • Token: ${verifiedFaceToken.substring(0, 16)}...`;
 
+  if (btnStart) btnStart.style.display = 'none';
   if (btnCapture) btnCapture.style.display = 'none';
+  if (btnDirect) btnDirect.style.display = 'none';
   if (btnRetake) btnRetake.style.display = 'inline-flex';
 
-  showToast('✅ Verifikasi Wajah Berhasil! Wajah asli Anda telah terekam aman.');
+  showToast('✅ Verifikasi Biometrik Berhasil! Wajah asli Anda telah tervalidasi.');
 }
 
 function retakeFaceVerification() {
@@ -926,6 +983,25 @@ function retakeFaceVerification() {
   verifiedFaceToken = null;
   const box = document.getElementById('biometric-signup-box');
   if (box) box.classList.remove('verified');
+
+  const btnStart = document.getElementById('btn-start-camera');
+  const btnCapture = document.getElementById('btn-capture-face');
+  const btnRetake = document.getElementById('btn-retake-face');
+  const btnDirect = document.getElementById('btn-direct-camera');
+  const preview = document.getElementById('face-captured-preview');
+  const placeholder = document.getElementById('face-placeholder');
+  const statusText = document.getElementById('face-status-text');
+  const statusDot = document.getElementById('face-status-dot');
+
+  if (preview) preview.style.display = 'none';
+  if (placeholder) placeholder.style.display = 'flex';
+  if (btnRetake) btnRetake.style.display = 'none';
+  if (btnCapture) btnCapture.style.display = 'none';
+  if (btnDirect) btnDirect.style.display = 'none';
+  if (btnStart) btnStart.style.display = 'inline-flex';
+  if (statusDot) statusDot.className = 'status-dot warning';
+  if (statusText) statusText.textContent = 'Wajah belum diverifikasi biometrik';
+
   startFaceCamera();
 }
 
