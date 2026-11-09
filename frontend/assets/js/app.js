@@ -4715,30 +4715,16 @@ async function syncDatabaseReports() {
   } catch (e) {}
 }
 
-// Global outside-click listener to auto-close notification modal
-document.addEventListener('click', (event) => {
-  const modal = document.getElementById('notification-dropdown');
-  const btn = document.getElementById('btn-navbar-notif');
-  if (modal && (modal.classList.contains('active') || modal.style.display === 'flex')) {
-    const card = modal.querySelector('.notif-center-modal') || modal.firstElementChild;
-    if (card && !card.contains(event.target) && btn && !btn.contains(event.target)) {
-      closeNotificationDropdown();
-    }
+// Keyboard ESC listener untuk menutup modal pada laptop/desktop
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    closeNotificationModal();
+    if (typeof closeSosDialModal === 'function') closeSosDialModal();
   }
 });
 
 // ---- Initialization ----
 document.addEventListener('DOMContentLoaded', () => {
-  // Bind notif bell button explicitly for guaranteed mobile touch and click responsiveness
-  const notifBtn = document.getElementById('btn-navbar-notif');
-  if (notifBtn) {
-    notifBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleNotificationDropdown(e);
-    });
-  }
-
   // Bind SOS subtabs explicitly for instant mobile touch response
   ['hotline', 'lapor', 'riwayat'].forEach(subtab => {
     const btn = document.getElementById(`subtab-btn-${subtab}`);
