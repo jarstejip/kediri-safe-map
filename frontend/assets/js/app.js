@@ -2208,7 +2208,7 @@ function logoutToAuth() {
 }
 
 // 6. Download Android APK Modal Handlers
-let MEDIAFIRE_DOWNLOAD_URL = 'https://www.mediafire.com/file/06gp0wt44qyj34a/kedirisafemap.apk/file';
+let MEDIAFIRE_DOWNLOAD_URL = 'https://www.mediafire.com/file/nmaa60q02iqtedp/kedirisafe.apk/file';
 
 function setMediafireDownloadUrl(url) {
   if (url) {
